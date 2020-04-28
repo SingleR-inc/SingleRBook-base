@@ -1,0 +1,14 @@
+--- 
+title: "Assigning cell types with SingleR"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: ref.bib
+biblio-style: apalike
+link-citations: yes
+description: "The SingleR book. Because sometimes, a vignette just isn't enough."
+---
+
+# Preface {-}
+
+Something something something.

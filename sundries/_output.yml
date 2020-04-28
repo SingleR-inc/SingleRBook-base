@@ -1,0 +1,19 @@
+bookdown::gitbook:
+  css: style.css
+  highlight: tango
+  config:
+    fontsettings:
+      theme: white
+    toc:
+      before: |
+        <li><a href="./">The SingleR book</a></li>
+      after: |
+        <li><a href="https://bioconductor.org" target="blank">Published by Bioconductor</a></li>
+    download: null
+    bookdown::epub_book: default
+    sharing:
+      github: no
+      facebook: no
+      twitter: no
+      linkedin: no
+    cover: images/cover.png

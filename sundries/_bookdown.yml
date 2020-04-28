@@ -1,0 +1,9 @@
+book_filename: "SingleR-book"
+pagetitle: "Assigning cell types with SingleR"
+delete_merged_file: true
+new_session: true
+language:
+  ui:
+    chapter_name: "Chapter "
+repo: "LTLA/SingleR-book"
+output_dir: "docs"
