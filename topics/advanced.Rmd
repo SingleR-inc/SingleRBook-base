@@ -1,0 +1,22 @@
+# Advanced options
+
+## Improving efficiency
+
+Advanced users can split the `SingleR()` workflow into two separate training and classification steps.
+This means that training (e.g., marker detection, assembling of nearest-neighbor indices) only needs to be performed once.
+The resulting data structures can then be re-used across multiple classifications with different test datasets, provided the test feature set is identical to or a superset of the features in the training set.
+For example:
+
+```{r}
+common <- intersect(rownames(hESCs), rownames(hpca.se))
+trained <- trainSingleR(hpca.se[common,], labels=hpca.se$label.main)
+pred.hesc2 <- classifySingleR(hESCs[common,], trained)
+table(pred.hesc$labels, pred.hesc2$labels)
+```
+
+Other efficiency improvements are possible through several arguments:
+
+- Switching to an approximate algorithm for the nearest neighbor search in `trainSingleR()` via the `BNPARAM=` argument from the `r Biocpkg("BiocNeighbors")` package.
+- Parallelizing the fine-tuning step in `classifySingleR()` with the `BPPARAM=` argument from the `r Biocpkg("BiocParallel")` package.
+
+These arguments can also be specified in the `SingleR()` command.
