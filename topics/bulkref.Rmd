@@ -23,7 +23,6 @@ For the sake of speed, we will only label the first 100 cells from this dataset.
 ```{r}
 library(scRNAseq)
 hESCs <- LaMannoBrainData('human-es')
-hESCs <- hESCs[,1:100]
 
 # SingleR() expects log-counts, but the function will also happily take raw
 # counts for the test dataset. The reference, however, must have log-values.
@@ -174,3 +173,7 @@ samples <- as.data.frame(samples)
 kable(unique(samples), format = "markdown")
 ```
 </details>
+
+```{r, echo=FALSE}
+saveRDS(pred.hesc, file="pred.hesc.rds")
+```

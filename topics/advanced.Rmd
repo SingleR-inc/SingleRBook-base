@@ -1,5 +1,11 @@
 # Advanced options
 
+```{r, echo=FALSE}
+knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
+library(BiocStyle)
+pred.hesc <- readRDS("pred.hesc.rds")
+```
+
 ## Improving efficiency
 
 Advanced users can split the `SingleR()` workflow into two separate training and classification steps.
@@ -8,6 +14,14 @@ The resulting data structures can then be re-used across multiple classification
 For example:
 
 ```{r}
+library(scRNAseq)
+hESCs <- LaMannoBrainData('human-es')
+
+library(scater)
+hESCs <- logNormCounts(hESCs)
+
+library(SingleR)
+hpca.se <- HumanPrimaryCellAtlasData()
 common <- intersect(rownames(hESCs), rownames(hpca.se))
 trained <- trainSingleR(hpca.se[common,], labels=hpca.se$label.main)
 pred.hesc2 <- classifySingleR(hESCs[common,], trained)

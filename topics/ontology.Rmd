@@ -11,6 +11,7 @@ Probabilities close to 1 indicate there is a 1:1 relation between that pair of l
 on the other hand, an all-zero probability vector indicates that a label is unique to a particular reference.
 
 ```{r, fig.wide=TRUE, fig.asp=1}
+library(SingleR)
 bp.se <- BlueprintEncodeData()
 hpca.se <- HumanPrimaryCellAtlasData()
 

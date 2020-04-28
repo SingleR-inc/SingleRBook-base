@@ -38,6 +38,7 @@ Here, we will use the Wilcoxon ranked sum test to identify the top markers for e
 This is slower but more appropriate for single-cell data compared to the default marker detection algorithm (which may fail for low-coverage data where the median is frequently zero).
 
 ```{r}
+library(SingleR)
 pred.grun <- SingleR(test=sceG, ref=sceM, labels=sceM$label, de.method="wilcox")
 table(pred.grun$labels)
 ```
@@ -101,5 +102,5 @@ table(pred.aggr$labels)
 
 ```{r, echo=FALSE}
 saveRDS(pred.grun, file="pred.grun.rds")
-saveRDS(sce.grun, file="sce.grun.rds")
+saveRDS(sceG, file="sceG.rds")
 ```
