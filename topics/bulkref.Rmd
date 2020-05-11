@@ -5,51 +5,157 @@ knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
 library(BiocStyle)
 ```
 
-## Running the algorithm
+## Overview
 
-`r Biocpkg("SingleR")` provides several reference datasets (mostly derived from bulk RNA-seq or microarray data) through dedicated data retrieval functions.
-For example, we obtain reference data from the Human Primary Cell Atlas using the `HumanPrimaryCellAtlasData()` function,
-which returns a `SummarizedExperiment` object containing matrix of log-expression values with sample-level labels.
+There are two "standard" ways to run `r Biocpkg("SingleR")`, 
+differing only in the marker detection strategy applied to the reference.
+In this chapter, we will describe the original - and default - approach [@aran2019reference],
+which uses the log-fold change between labels and is well-suited to the built-in reference datasets.
+We will also review the available built-in references and comment on their suitability for various applications.
 
-```{r}
-library(SingleR)
-hpca.se <- HumanPrimaryCellAtlasData()
-hpca.se
-```
+## Annotation with default marker detection 
 
-Our test dataset will is taken from @lamanno2016molecular.  
-For the sake of speed, we will only label the first 100 cells from this dataset.
+For demonstration purposes, we will use the Nestorowa haematopoietic stem cell (HSC)
+dataset from the `r Biocpkg("scRNAseq")` package.
+The `NestorowaHSCData()` function conveniently returns a `SingleCellExperiment` 
+object containing the count matrix for this dataset.
 
 ```{r}
 library(scRNAseq)
-hESCs <- LaMannoBrainData('human-es')
+sce <- GrunHSCData(ensembl=TRUE)
+sce
+```
 
-# SingleR() expects log-counts, but the function will also happily take raw
-# counts for the test dataset. The reference, however, must have log-values.
+Our plan is to annotate each cell with the built-in ImmGen reference dataset [@ImmGenRef].
+Calling the `ImmGenData()` function returns a `SummarizedExperiment` object 
+containing a matrix of log-expression values with sample-level labels.
+We set `ensembl=TRUE` to match the reference's gene annotation with that in the `sce` object
+(the default is to use the gene symbol).
+
+```{r}
+library(SingleR)
+immgen <- ImmGenData(ensembl=TRUE)
+immgen
+```
+
+Technically speaking, each built-in dataset actually has three sets of labels that primarily differ in their resolution.
+For the purposes of this demonstration, we will use the "fine" labels in the `label.fine` metadata field.
+
+```{r}
+head(immgen$label.fine)
+```
+
+Annotation is then a simple matter of calling `SingleR()` on our test (Nestorowa) dataset and the reference (ImmGen) dataset.
+This applies the algorithm described in Section \@ref(method-description),
+returning a `DataFrame` where each row contains prediction results for a single cell in the `sce` object.
+Labels are shown before fine-tuning (`first.labels`), after fine-tuning (`labels`) and after pruning (`pruned.labels`), 
+along with the associated scores for each label.
+
+```{r}
+# See 'Choices of assay data' for 'assay.type.test=' explanation.
+pred <- SingleR(test = sce, ref = immgen, 
+    labels = immgen$label.fine, assay.type.test=1)
+pred
+```
+
+Upon summarizing the distribution of assigned labels, we see that many of them are related to stem cells, 
+though there are quite a large number of more differentiated labels mixed in.
+This is probably because - despite what its name might suggest -
+the dataset obtained by `GrunHSCData()` actually contains more than HSCs.
+
+```{r}
+head(sort(table(pred$labels), decreasing=TRUE))
+```
+
+If we restrict our analysis to the sorted HSCs (obviously) and remove one low-quality batch
+(see [the analysis here](https://osca.bioconductor.org/merged-hcsc.html#quality-control-12) for the rationale)
+we can see that the distribution of cell type labels is much more as expected.
+
+```{r}
+actual.hsc <- pred$labels[sce$protocol=="sorted hematopoietic stem cells" & sce$sample!="JC4"]
+head(sort(table(actual.hsc), decreasing=TRUE))
+```
+
+```{r, echo=FALSE}
+# Sanity check that we got some stem.
+is.stem <- grepl("Stem", actual.hsc)
+stopifnot(mean(is.stem) > 0.95)
+```
+
+## Comments on default marker detection
+
+`r Biocpkg("SingleR")` detects markers in a pairwise manner between labels in the reference dataset.
+Specifically, for each label of interest, it performs pairwise comparisons to every other label in the reference
+and identifies the genes that are upregulated in the label of interest for each comparison.
+The initial score calculation is then performed on the union of marker genes across all comparisons for all label.
+This approach ensures that the selected subset of features will contain genes that distinguish each label from any other label.
+(In contrast, other approaches that treat the "other" labels as a single group do not offer this guarantee;
+see [here](https://osca.bioconductor.org/marker-detection.html#standard-application) for a discussion.)
+It also allows the fine-tuning step to aggressively improve resolution by only using marker genes 
+from comparisons involving labels that both have scores close to the maximum.
+
+The original marker detection algorithm used in @aran2019reference identified marker genes 
+based on their log-fold changes in each pairwise comparison.
+Specifically, it used the genes with the largest positive differences in the per-label median log-expression values between labels.
+The number of genes taken from each pairwise comparison was defined as $500 (\frac{2}{3})^{\log_{2}(n)}$,
+where $n$ is the number of unique labels in the reference;
+this aimed to reduce the number of genes (and thus the computational time) as the number of labels and pairwise comparisons increased.
+We call this the "classic" method for detecting markers, which is controlled by the `de.method=` argument in the `SingleR()` function.
+It is primarily intended for reference datasets that have little or no replication,
+a description that covers most of the built-in references 
+and precludes more complicated marker detection procedures (Chapter \@ref(using-single-cell-references)).
+
+## Choices of assay data
+
+For the reference dataset, the assay matrix _must_ contain log-transformed normalized expression values.
+This is because the default marker detection computes log-fold changes by subtracting the medians,
+which makes little sense unless the input expression values are already log-transformed.
+
+For the test data, the assay data need not be log-transformed or even (scale) normalized.
+This is because `SingleR()` computes Spearman correlations within each cell, 
+which is unaffected by monotonic transformations like cell-specific scaling or log-transformation.
+It is perfectly satisfactory to provide the raw counts for the test dataset to `SingleR()`,
+and is the reason why we set `assay.type.test=1` in our previous call for the Grun dataset.
+
+The exception to this rule occurs when comparing data from full-length technologies to the built-in references.
+The built-in references are constructed to be comparable to unique molecular identifier (UMI) protocols,
+where the expression values are less sensitive to differences in gene length.
+Thus, when comparing Smart-seq2 test datasets to the built-in references,
+better performance can often be achieved by processing the test counts to transcripts-per-million values.
+
+We demonstrate below using another HSC dataset that was generated using the Smart-seq2 protocol [@nestorowa2016].
+Again, we see that most of the predicted labels are related to stem cells, which is comforting.
+
+```{r}
+sce.nest <- NestorowaHSCData()
+
+# Getting the exonic gene lengths.
+library(AnnotationHub)
+mm.db <- AnnotationHub()[["AH73905"]]
+mm.exons <- exonsBy(mm.db, by="gene")
+mm.exons <- reduce(mm.exons)
+mm.len <- sum(width(mm.exons))
+
+# Computing the TPMs with a simple scaling by gene length.
 library(scater)
-hESCs <- logNormCounts(hESCs)
+keep <- intersect(names(mm.len), rownames(sce.nest))
+tpm.nest <- calculateTPM(sce.nest[keep,], lengths=mm.len[keep])
+
+# Performing the assignment.
+pred <- SingleR(test = tpm.nest, ref = immgen, labels = immgen$label.fine)
+head(sort(table(pred$labels), decreasing=TRUE), 10)
 ```
 
-We use our `hpca.se` reference to annotate each cell in `hESCs` via the `SingleR()` function, which uses the algorithm described above.
-Note that the default marker detection method is to take the genes with the largest positive log-fold changes in the per-label medians for each gene.
-
-```{r}
-pred.hesc <- SingleR(test = hESCs, ref = hpca.se, labels = hpca.se$label.main)
-pred.hesc
+```{r, echo=FALSE}
+# Sanity check that we got some stem.
+is.stem <- grepl("Stem", pred$labels)
+stopifnot(mean(is.stem) > 0.95)
 ```
 
-Each row of the output `DataFrame` contains prediction results for a single cell.
-Labels are shown before fine-tuning (`first.labels`), after fine-tuning (`labels`) and after pruning (`pruned.labels`), along with the associated scores.
-We summarize the distribution of labels across our subset of cells:
-
-```{r}
-table(pred.hesc$labels)
-```
-
-At this point, it is worth noting that `r Biocpkg("SingleR")` is workflow/package agnostic.
-The above example uses `SummarizedExperiment` objects, but the same functions will accept any (log-)normalized expression matrix.
 
 ## Available references
+
+`r Biocpkg("SingleR")` provides several reference datasets (mostly derived from bulk RNA-seq or microarray data) through dedicated data retrieval functions.
 
 The [legacy SingleR package](https://github.com/dviraran/SingleR/tree/master/data) provides RDA files that contain normalized expression values and cell types labels based on bulk RNA-seq, microarray and single-cell RNA-seq data from:
 
@@ -175,5 +281,5 @@ kable(unique(samples), format = "markdown")
 </details>
 
 ```{r, echo=FALSE}
-saveRDS(pred.hesc, file="pred.hesc.rds")
+saveRDS(pred.hesc, file="pred.rds")
 ```
