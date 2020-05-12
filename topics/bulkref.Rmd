@@ -1,4 +1,4 @@
-# Using the built-in references
+# For unreplicated references
 
 ```{r, echo=FALSE}
 knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
@@ -7,17 +7,31 @@ library(BiocStyle)
 
 ## Overview
 
-There are two "standard" ways to run `r Biocpkg("SingleR")`, 
-differing only in the marker detection strategy applied to the reference.
-In this chapter, we will describe the original - and default - approach [@aran2019reference],
-which uses the log-fold change between labels and is well-suited to the built-in reference datasets.
-We will also review the available built-in references and comment on their suitability for various applications.
+`r Biocpkg("SingleR")` detects markers in a pairwise manner between labels in the reference dataset.
+Specifically, for each label of interest, it performs pairwise comparisons to every other label in the reference
+and identifies the genes that are upregulated in the label of interest for each comparison.
+The initial score calculation is then performed on the union of marker genes across all comparisons for all label.
+This approach ensures that the selected subset of features will contain genes that distinguish each label from any other label.
+(In contrast, other approaches that treat the "other" labels as a single group do not offer this guarantee;
+see [here](https://osca.bioconductor.org/marker-detection.html#standard-application) for a discussion.)
+It also allows the fine-tuning step to aggressively improve resolution by only using marker genes 
+from comparisons involving labels that both have scores close to the maximum.
+
+The original ("classic") marker detection algorithm used in @aran2019reference identified marker genes 
+based on their log-fold changes in each pairwise comparison.
+Specifically, it used the genes with the largest positive differences in the per-label median log-expression values between labels.
+The number of genes taken from each pairwise comparison was defined as $500 (\frac{2}{3})^{\log_{2}(n)}$,
+where $n$ is the number of unique labels in the reference;
+this aimed to reduce the number of genes (and thus the computational time) as the number of labels and pairwise comparisons increased.
+It is primarily intended for reference datasets that have little or no replication,
+a description that covers most of the built-in references 
+and precludes more complicated marker detection procedures (Chapter \@ref(using-single-cell-references)).
 
 ## Annotation with default marker detection 
 
-For demonstration purposes, we will use the Nestorowa haematopoietic stem cell (HSC)
+For demonstration purposes, we will use the @grun2016denovo haematopoietic stem cell (HSC)
 dataset from the `r Biocpkg("scRNAseq")` package.
-The `NestorowaHSCData()` function conveniently returns a `SingleCellExperiment` 
+The `GrunHSCData()` function conveniently returns a `SingleCellExperiment` 
 object containing the count matrix for this dataset.
 
 ```{r}
@@ -45,7 +59,8 @@ For the purposes of this demonstration, we will use the "fine" labels in the `la
 head(immgen$label.fine)
 ```
 
-Annotation is then a simple matter of calling `SingleR()` on our test (Nestorowa) dataset and the reference (ImmGen) dataset.
+Annotation is then a simple matter of calling `SingleR()` on our test (Grun) dataset and the reference (ImmGen) dataset,
+leaving the default of `de.method="classic"` to use the original marker detection scheme.
 This applies the algorithm described in Section \@ref(method-description),
 returning a `DataFrame` where each row contains prediction results for a single cell in the `sce` object.
 Labels are shown before fine-tuning (`first.labels`), after fine-tuning (`labels`) and after pruning (`pruned.labels`), 
@@ -82,40 +97,19 @@ is.stem <- grepl("Stem", actual.hsc)
 stopifnot(mean(is.stem) > 0.95)
 ```
 
-## Comments on default marker detection
-
-`r Biocpkg("SingleR")` detects markers in a pairwise manner between labels in the reference dataset.
-Specifically, for each label of interest, it performs pairwise comparisons to every other label in the reference
-and identifies the genes that are upregulated in the label of interest for each comparison.
-The initial score calculation is then performed on the union of marker genes across all comparisons for all label.
-This approach ensures that the selected subset of features will contain genes that distinguish each label from any other label.
-(In contrast, other approaches that treat the "other" labels as a single group do not offer this guarantee;
-see [here](https://osca.bioconductor.org/marker-detection.html#standard-application) for a discussion.)
-It also allows the fine-tuning step to aggressively improve resolution by only using marker genes 
-from comparisons involving labels that both have scores close to the maximum.
-
-The original marker detection algorithm used in @aran2019reference identified marker genes 
-based on their log-fold changes in each pairwise comparison.
-Specifically, it used the genes with the largest positive differences in the per-label median log-expression values between labels.
-The number of genes taken from each pairwise comparison was defined as $500 (\frac{2}{3})^{\log_{2}(n)}$,
-where $n$ is the number of unique labels in the reference;
-this aimed to reduce the number of genes (and thus the computational time) as the number of labels and pairwise comparisons increased.
-We call this the "classic" method for detecting markers, which is controlled by the `de.method=` argument in the `SingleR()` function.
-It is primarily intended for reference datasets that have little or no replication,
-a description that covers most of the built-in references 
-and precludes more complicated marker detection procedures (Chapter \@ref(using-single-cell-references)).
-
 ## Choices of assay data
 
 For the reference dataset, the assay matrix _must_ contain log-transformed normalized expression values.
-This is because the default marker detection computes log-fold changes by subtracting the medians,
+This is because the default marker detection scheme computes log-fold changes by subtracting the medians,
 which makes little sense unless the input expression values are already log-transformed.
+For alternative schemes, this requirement may be relaxed (e.g., Wilcoxon rank sum tests do not require transformation);
+similarly, if pre-defined markers are supplied, no transformaton or normalization is necessary (see comments below for the test data).
 
 For the test data, the assay data need not be log-transformed or even (scale) normalized.
 This is because `SingleR()` computes Spearman correlations within each cell, 
 which is unaffected by monotonic transformations like cell-specific scaling or log-transformation.
 It is perfectly satisfactory to provide the raw counts for the test dataset to `SingleR()`,
-and is the reason why we set `assay.type.test=1` in our previous call for the Grun dataset.
+which is the reason for setting `assay.type.test=1` in our previous `SingleR()` call for the Grun dataset.
 
 The exception to this rule occurs when comparing data from full-length technologies to the built-in references.
 The built-in references are constructed to be comparable to unique molecular identifier (UMI) protocols,
@@ -152,134 +146,10 @@ is.stem <- grepl("Stem", pred$labels)
 stopifnot(mean(is.stem) > 0.95)
 ```
 
+# Session information {-}
 
-## Available references
-
-`r Biocpkg("SingleR")` provides several reference datasets (mostly derived from bulk RNA-seq or microarray data) through dedicated data retrieval functions.
-
-The [legacy SingleR package](https://github.com/dviraran/SingleR/tree/master/data) provides RDA files that contain normalized expression values and cell types labels based on bulk RNA-seq, microarray and single-cell RNA-seq data from:
-
-* Blueprint [@blueprintRef] and Encode [@encodeRef],
-* the Human Primary Cell Atlas [@hpcaRef],
-* the murine [ImmGen](http://www.immgen.org/) [@ImmGenRef], and
-* a collection of mouse data sets downloaded from GEO [@Benayoun2019].
-
-The bulk RNA-seq and microarray data sets of the first three reference data sets were obtained from pre-sorted cell populations, i.e., the cell labels of these samples were mostly derived based on the respective sorting/purification strategy, not via *in silico* prediction methods.
-
-Three additional reference datasets from bulk RNA-seq and microarray data for immune cells have also been prepared.
-Each of these datasets were also obtained from pre-sorted cell populations:
-
-* The [Database for Immune Cell Expression(/eQTLs/Epigenomics)](https://dice-database.org) [@diceRef],
-* Novershtern Hematopoietic Cell Data - [GSE24759](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE24759) - formerly known as Differentiation Map [@dmapRef], and
-* Monaco Immune Cell Data - [GSE107011](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE107011)  [@monaco_immuneRef].
-
-The characteristics of each dataset are summarized below:
-
-| Retrieval function |  Organism  | Samples | Sample types |  No. of main labels  | No. of fine labels | Cell type focus |
-|------------------|----------|----------|-------------|----------------------|------------|----------|
-|`HumanPrimaryCellAtlasData()`| human | 713 | microarrays of sorted cell populations  | 37 |  157 | Non-specific |
-|`BlueprintEncodeData()` |  human | 259 | RNA-seq | 24 | 43 | Non-specific |
-|`DatabaseImmuneCellExpressionData()` | human | 1561 | RNA-seq | 5 | 15 | Immune |
-|`NovershternHematopoieticData()` | human | 211 | microarrays of sorted cell populations | 17 | 38 | Hematopoietic & Immune |
-|`MonacoImmuneData()` | human | 114 | RNA-seq | 11 | 29 | Immune |
-|`ImmGenData()`|  mouse | 830  | microarrays of sorted cell populations | 20 | 253 | Hematopoietic & Immune |
-|`MouseRNAseqData()`| mouse |358  |RNA-seq| 18  | 28 | Non-specific |
-
-Details for each dataset can be viewed on the corresponding help page for its retrieval function (e.g., `?ImmGenData`).
-The available sample types in each set can be viewed in the collapsible sections below.
-The cell types in each dataset have also been manually mapped to the [Cell Ontology](https://www.ebi.ac.uk/ols/ontologies/cl), which provides a standardized vocabulary for comparison of labels across studies.
-
-<details>
-  <summary>`BlueprintEncodeData` Labels</summary>
-
-```{r, echo=FALSE, message=FALSE}
-library(knitr)
-library(SingleR)
-ref <- BlueprintEncodeData()
-samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
-samples <- as.data.frame(samples)
-kable(unique(samples), format = "markdown")
+```{r}
+sessionInfo()
 ```
-</details>
 
-<details>
-  <summary>`HumanPrimaryCellAtlasData` Labels</summary>
-
-```{r, echo=FALSE, message=FALSE}
-library(knitr)
-library(SingleR)
-ref <- HumanPrimaryCellAtlasData()
-samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
-samples <- as.data.frame(samples)
-kable(unique(samples), format = "markdown")
-```
-</details>
-
-<details>
-  <summary>`DatabaseImmuneCellExpressionData` Labels</summary>
-
-```{r, echo=FALSE, message=FALSE}
-library(knitr)
-library(SingleR)
-ref <- DatabaseImmuneCellExpressionData()
-samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
-samples <- as.data.frame(samples)
-kable(unique(samples), format = "markdown")
-```
-</details>
-
-<details>
-  <summary>`NovershternHematopoieticData` Labels</summary>
-
-```{r, echo=FALSE, message=FALSE}
-library(knitr)
-library(SingleR)
-ref <- NovershternHematopoieticData()
-samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
-samples <- as.data.frame(samples)
-kable(unique(samples), format = "markdown")
-```
-</details>
-
-<details>
-  <summary>`MonacoImmuneData` Labels</summary>
-
-```{r, echo=FALSE, message=FALSE}
-library(knitr)
-library(SingleR)
-ref <- MonacoImmuneData()
-samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
-samples <- as.data.frame(samples)
-kable(unique(samples), format = "markdown")
-```
-</details>
-
-<details>
-  <summary>`ImmGenData` Labels</summary>
-
-```{r, echo=FALSE, message=FALSE}
-library(knitr)
-library(SingleR)
-ref <- ImmGenData()
-samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
-samples <- as.data.frame(samples)
-kable(unique(samples), format = "markdown")
-```
-</details>
-
-<details>
-  <summary>`MouseRNAseqData` Labels</summary>
-
-```{r, echo=FALSE, message=FALSE}
-library(knitr)
-library(SingleR)
-ref <- MouseRNAseqData()
-samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
-samples <- as.data.frame(samples)
-kable(unique(samples), format = "markdown")
-```
-</details>
-
-```{r, echo=FALSE}
-saveRDS(pred.hesc, file="pred.rds")
-```
+# References {-}

@@ -1,0 +1,127 @@
+
+## Available references
+
+`r Biocpkg("SingleR")` provides several reference datasets (mostly derived from bulk RNA-seq or microarray data) through dedicated data retrieval functions.
+
+The [legacy SingleR package](https://github.com/dviraran/SingleR/tree/master/data) provides RDA files that contain normalized expression values and cell types labels based on bulk RNA-seq, microarray and single-cell RNA-seq data from:
+
+* Blueprint [@blueprintRef] and Encode [@encodeRef],
+* the Human Primary Cell Atlas [@hpcaRef],
+* the murine [ImmGen](http://www.immgen.org/) [@ImmGenRef], and
+* a collection of mouse data sets downloaded from GEO [@Benayoun2019].
+
+The bulk RNA-seq and microarray data sets of the first three reference data sets were obtained from pre-sorted cell populations, i.e., the cell labels of these samples were mostly derived based on the respective sorting/purification strategy, not via *in silico* prediction methods.
+
+Three additional reference datasets from bulk RNA-seq and microarray data for immune cells have also been prepared.
+Each of these datasets were also obtained from pre-sorted cell populations:
+
+* The [Database for Immune Cell Expression(/eQTLs/Epigenomics)](https://dice-database.org) [@diceRef],
+* Novershtern Hematopoietic Cell Data - [GSE24759](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE24759) - formerly known as Differentiation Map [@dmapRef], and
+* Monaco Immune Cell Data - [GSE107011](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE107011)  [@monaco_immuneRef].
+
+The characteristics of each dataset are summarized below:
+
+| Retrieval function |  Organism  | Samples | Sample types |  No. of main labels  | No. of fine labels | Cell type focus |
+|------------------|----------|----------|-------------|----------------------|------------|----------|
+|`HumanPrimaryCellAtlasData()`| human | 713 | microarrays of sorted cell populations  | 37 |  157 | Non-specific |
+|`BlueprintEncodeData()` |  human | 259 | RNA-seq | 24 | 43 | Non-specific |
+|`DatabaseImmuneCellExpressionData()` | human | 1561 | RNA-seq | 5 | 15 | Immune |
+|`NovershternHematopoieticData()` | human | 211 | microarrays of sorted cell populations | 17 | 38 | Hematopoietic & Immune |
+|`MonacoImmuneData()` | human | 114 | RNA-seq | 11 | 29 | Immune |
+|`ImmGenData()`|  mouse | 830  | microarrays of sorted cell populations | 20 | 253 | Hematopoietic & Immune |
+|`MouseRNAseqData()`| mouse |358  |RNA-seq| 18  | 28 | Non-specific |
+
+Details for each dataset can be viewed on the corresponding help page for its retrieval function (e.g., `?ImmGenData`).
+The available sample types in each set can be viewed in the collapsible sections below.
+The cell types in each dataset have also been manually mapped to the [Cell Ontology](https://www.ebi.ac.uk/ols/ontologies/cl), which provides a standardized vocabulary for comparison of labels across studies.
+
+<details>
+  <summary>`BlueprintEncodeData` Labels</summary>
+
+```{r, echo=FALSE, message=FALSE}
+library(knitr)
+library(SingleR)
+ref <- BlueprintEncodeData()
+samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
+samples <- as.data.frame(samples)
+kable(unique(samples), format = "markdown")
+```
+</details>
+
+<details>
+  <summary>`HumanPrimaryCellAtlasData` Labels</summary>
+
+```{r, echo=FALSE, message=FALSE}
+library(knitr)
+library(SingleR)
+ref <- HumanPrimaryCellAtlasData()
+samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
+samples <- as.data.frame(samples)
+kable(unique(samples), format = "markdown")
+```
+</details>
+
+<details>
+  <summary>`DatabaseImmuneCellExpressionData` Labels</summary>
+
+```{r, echo=FALSE, message=FALSE}
+library(knitr)
+library(SingleR)
+ref <- DatabaseImmuneCellExpressionData()
+samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
+samples <- as.data.frame(samples)
+kable(unique(samples), format = "markdown")
+```
+</details>
+
+<details>
+  <summary>`NovershternHematopoieticData` Labels</summary>
+
+```{r, echo=FALSE, message=FALSE}
+library(knitr)
+library(SingleR)
+ref <- NovershternHematopoieticData()
+samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
+samples <- as.data.frame(samples)
+kable(unique(samples), format = "markdown")
+```
+</details>
+
+<details>
+  <summary>`MonacoImmuneData` Labels</summary>
+
+```{r, echo=FALSE, message=FALSE}
+library(knitr)
+library(SingleR)
+ref <- MonacoImmuneData()
+samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
+samples <- as.data.frame(samples)
+kable(unique(samples), format = "markdown")
+```
+</details>
+
+<details>
+  <summary>`ImmGenData` Labels</summary>
+
+```{r, echo=FALSE, message=FALSE}
+library(knitr)
+library(SingleR)
+ref <- ImmGenData()
+samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
+samples <- as.data.frame(samples)
+kable(unique(samples), format = "markdown")
+```
+</details>
+
+<details>
+  <summary>`MouseRNAseqData` Labels</summary>
+
+```{r, echo=FALSE, message=FALSE}
+library(knitr)
+library(SingleR)
+ref <- MouseRNAseqData()
+samples <- colData(ref)[,c("label.main", "label.fine","label.ont")]
+samples <- as.data.frame(samples)
+kable(unique(samples), format = "markdown")
+```
+</details>
