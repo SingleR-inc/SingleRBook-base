@@ -178,7 +178,7 @@ table(pred.grun3$labels)
 Obviously, the aggregation itself requires computational work so setting `aggr.ref=TRUE` in `SingleR()` itself may not improve speed.
 Rather, the real power of this approach lies in pre-aggregating the reference dataset
 so that it can be repeatedly applied to quickly annotate multiple test datasets.
-This approach is discussed in more detail in Chapter \@ref(advanced-usage).
+This approach is discussed in more detail in Chapter \@ref(advanced-options).
 
 ## Session information {-}
 

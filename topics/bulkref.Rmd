@@ -1,4 +1,4 @@
-# For unreplicated references
+# Using the built-in references
 
 ```{r, echo=FALSE}
 knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
@@ -146,10 +146,10 @@ is.stem <- grepl("Stem", pred$labels)
 stopifnot(mean(is.stem) > 0.95)
 ```
 
-# Session information {-}
+## Session information {-}
 
 ```{r}
 sessionInfo()
 ```
 
-# References {-}
+## References {-}
