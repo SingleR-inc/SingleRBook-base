@@ -151,5 +151,3 @@ stopifnot(mean(is.stem) > 0.95)
 ```{r}
 sessionInfo()
 ```
-
-## References {-}

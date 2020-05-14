@@ -185,5 +185,3 @@ This approach is discussed in more detail in Chapter \@ref(advanced-options).
 ```{r}
 sessionInfo()
 ```
-
-## References

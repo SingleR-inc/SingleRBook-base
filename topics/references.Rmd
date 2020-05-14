@@ -118,5 +118,3 @@ DT::datatable(unique(samples))
 ```{r}
 sessionInfo()
 ```
-
-# References {-}

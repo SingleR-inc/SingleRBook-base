@@ -146,5 +146,3 @@ stopifnot(mean(pred3a$labels==pred3b$labels) > 0.95)
 ```{r}
 sessionInfo()
 ```
-
-## References {-}

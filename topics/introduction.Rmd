@@ -81,5 +81,3 @@ well-considered suggestions for improvements are always welcome.
 ```{r}
 sessionInfo()
 ```
-
-## References {-}
