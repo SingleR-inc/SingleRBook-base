@@ -5,7 +5,7 @@ bibliography: ../ref.bib
 # Available references
 
 ```{r, echo=FALSE}
-knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
 library(BiocStyle)
 ```
 
