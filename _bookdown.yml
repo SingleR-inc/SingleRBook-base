@@ -7,3 +7,11 @@ language:
     chapter_name: "Chapter "
 repo: "LTLA/SingleR-book"
 output_dir: "docs"
+rmd_files: ["index.Rmd",
+    "introduction.Rmd",
+    "bulkref.Rmd",
+    "scref.Rmd",
+    "diagnostics.Rmd",
+    "multiple.Rmd",
+    "ontology.Rmd",
+    "advanced.Rmd"]
