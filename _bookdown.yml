@@ -14,4 +14,7 @@ rmd_files: ["index.Rmd",
     "diagnostics.Rmd",
     "multiple.Rmd",
     "ontology.Rmd",
-    "advanced.Rmd"]
+    "advanced.Rmd",
+    "pancreas.Rmd",
+    "authors.Rmd",
+    "bibliography.Rmd"]
