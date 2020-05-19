@@ -4,6 +4,8 @@ output:
 bibliography: ../ref.bib
 ---
 
+# (PART) Basic usage {-}
+
 # Introduction
 
 ```{r, echo=FALSE}

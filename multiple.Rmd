@@ -2,6 +2,8 @@
 bibliography: ref.bib
 ---
 
+# (PART) Advanced usage {-}
+
 # Using multiple references
 
 ```{r, echo=FALSE}
