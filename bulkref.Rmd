@@ -1,8 +1,12 @@
+---
+bibliography: ref.bib
+---
+
 # Using the built-in references
 
-```{r, echo=FALSE}
-knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
-library(BiocStyle)
+```{r, echo=FALSE, results='asis'}
+library(rebook)
+chapterPreamble(cache=TRUE)
 ```
 
 ## Overview
@@ -73,6 +77,8 @@ pred <- SingleR(test = sce, ref = immgen,
 pred
 ```
 
+## Interaction with quality control
+
 Upon summarizing the distribution of assigned labels, we see that many of them are related to stem cells, 
 though there are quite a large number of more differentiated labels mixed in.
 This is probably because - despite what its name might suggest -
@@ -82,9 +88,17 @@ the dataset obtained by `GrunHSCData()` actually contains more than HSCs.
 head(sort(table(pred$labels), decreasing=TRUE))
 ```
 
+```{r, echo=FALSE}
+# Sanity check that we got less stem here.
+stuff <- head(sort(table(pred$labels), decreasing=TRUE))
+stopifnot(any(!grepl("Stem", names(stuff))))
+```
+
 If we restrict our analysis to the sorted HSCs (obviously) and remove one low-quality batch
 (see [the analysis here](https://osca.bioconductor.org/merged-hcsc.html#quality-control-12) for the rationale)
-we can see that the distribution of cell type labels is much more as expected.
+we can see that the distribution of cell type labels is more similar to what we might expect.
+Low-quality cells - typically those with low library sizes and low numbers of detected genes -
+lack information for accurate label assignment and often need to be removed to enable interpretation of the results.
 
 ```{r}
 actual.hsc <- pred$labels[sce$protocol=="sorted hematopoietic stem cells" & sce$sample!="JC4"]
@@ -96,6 +110,12 @@ head(sort(table(actual.hsc), decreasing=TRUE))
 is.stem <- grepl("Stem", actual.hsc)
 stopifnot(mean(is.stem) > 0.95)
 ```
+
+Filtering on the results in the above manner is possible because `SingleR()` operates independently on each cell.
+The annotation is orthogonal to any decisions about the relative quality of the cells in the test dataset;
+the same results will be obtained regardless of whether the annotation is performed before or after quality control.
+This is logisitically convenient as it means that the annotation does not have to be repeated 
+if the quality control scheme (or any other downstream step, like clustering) changes throughout the lifetime of the analysis.
 
 ## Choices of assay data
 
@@ -148,6 +168,6 @@ stopifnot(mean(is.stem) > 0.95)
 
 ## Session information {-}
 
-```{r}
-sessionInfo()
+```{r, echo=FALSE, results='asis'}
+prettySessionInfo()
 ```

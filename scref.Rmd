@@ -46,10 +46,8 @@ table(sceM$label)
 ```
 
 We then set up our test dataset from @grun2016denovo, applying some basic quality control as discusssed
-[here](https://osca.bioconductor.org/grun-human-pancreas-cel-seq2.html#quality-control-8).
-(As `SingleR()` operates independently on each cell, 
-quality control on the test dataset can actually be applied after annotation is performed.
-We only apply it beforehand here to simplify the interpretation of the downstream results.)
+[here](https://osca.bioconductor.org/grun-human-pancreas-cel-seq2.html#quality-control-8) 
+and in Section \@ref{interaction-with-quality-control}.
 We also compute the log-transformed values here, not because it is strictly necessary
 but so that we don't have to keep on typing `assay.type.test=1` in later calls to `SingleR()`.
 
