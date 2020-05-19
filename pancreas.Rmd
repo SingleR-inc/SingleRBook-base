@@ -1,0 +1,78 @@
+---
+bibliography: ref.bib
+---
+
+# (PART) Workflows {-}
+
+# Cross-annotating pancreas
+
+```{r, echo=FALSE, results="asis"}
+library(rebook)
+chapterPreamble(cache=TRUE)
+```
+
+## Loading the data
+
+We load the @muraro2016singlecell dataset as our reference, 
+removing unlabelled cells or cells without a clear label.
+We also need to compute log-expression values for use in `SingleR()`.
+
+```{r loading-muraro}
+library(scRNAseq)
+sceM <- MuraroPancreasData()
+
+sceM <- sceM[,!is.na(sceM$label) & sceM$label!="unclear"] 
+
+library(scater)
+sceM <- logNormCounts(sceM)
+```
+
+```{r}
+# Examining the distribution of labels in this reference.
+table(sceM$label)
+```
+
+We load the @grun2016denovo dataset as our test,
+applying some basic quality control to remove low-quality cells in some of the batches
+(see [here](https://osca.bioconductor.org/grun-human-pancreas-cel-seq2.html#quality-control-8) for details).
+Technically speaking, this does not need log-expression values but we compute them anyway for convenience.
+
+```{r loading-grun}
+sceG <- GrunPancreasData()
+
+sceG <- addPerCellQC(sceG)
+qc <- quickPerCellQC(colData(sceG), 
+    percent_subsets="altexps_ERCC_percent",
+    batch=sceG$donor,
+    subset=sceG$donor %in% c("D17", "D7", "D2"))
+sceG <- sceG[,!qc$discard]
+
+sceG <- logNormCounts(sceG)
+```
+
+```{r}
+ncol(sceG)
+```
+
+## Applying the annotation
+
+We apply `SingleR()` with Wilcoxon rank sum test-based marker detection to annotate the Grun dataset.
+
+```{r annotation}
+library(SingleR)
+pred.grun <- SingleR(test=sceG, ref=sceM, labels=sceM$label, de.method="wilcox")
+```
+
+We examine the distribution of predicted labels:
+
+```{r}
+table(pred.grun$labels)
+```
+
+## Diagnostics
+
+## Session information {-}
+
+```{r, results='asis'}
+prettySessionInfo()
+```

@@ -1,12 +1,12 @@
 ---
-bibliography: ../ref.bib
+bibliography: ref.bib
 ---
 
 # Using single-cell references
 
-```{r, echo=FALSE}
-knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
-library(BiocStyle)
+```{r, echo=FALSE, results='asis'}
+library(rebook)
+chapterPreamble()
 ```
 
 ## Overview
@@ -74,6 +74,13 @@ which may fail for low-coverage data where the median for each label is often ze
 library(SingleR)
 pred.grun <- SingleR(test=sceG, ref=sceM, labels=sceM$label, de.method="wilcox")
 table(pred.grun$labels)
+```
+
+```{r, echo=FALSE, results="hide"}
+# Sanity check that we're synchronized with the workflow.
+old.vals <- pred.grun
+extractCached("pancreas.Rmd", "annotation", "pred.grun")
+stopifnot(identical(old.vals, pred.grun))
 ```
 
 By default, the function will take the top `de.n` (default: 10) genes from each pairwise comparison between labels.
@@ -180,6 +187,6 @@ This approach is discussed in more detail in Chapter \@ref(advanced-options).
 
 ## Session information {-}
 
-```{r}
-sessionInfo()
+```{r, echo=FALSE, results='asis'}
+prettySessionInfo()
 ```
