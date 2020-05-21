@@ -139,15 +139,16 @@ It is straightforward to repeat this process for all labels by wrapping this cod
 as shown below in Figure \@ref(fig:grun-beta-heat-all).
 Note that `plotHeatmap()` is not the only function that can be used for this visualization;
 we could also use `plotDots()` to create a `r CRANpkg("Seurat")`-style dot plot,
-or we could use other heatmap plotting functions such as `plotXXX()` from `r Biocpkg("dittoSeq")`.
+or we could use other heatmap plotting functions such as `dittoHeatmap()` from `r Biocpkg("dittoSeq")`.
 
-```{r grun-beta-heat-all, fig.width=10, fig.height=10, fig.cap="Heatmaps of log-expression values in the Grun dataset for all marker genes upregulated in each label in the Muraro reference dataset. Assigned labels for each cell are shown at the top."}
+```{r grun-beta-heat-all, fig.width=20, fig.height=15, fig.cap="Heatmaps of log-expression values in the Grun dataset for all marker genes upregulated in each label in the Muraro reference dataset. Assigned labels for each cell are shown at the top."}
 collected <- list()
 for (lab in unique(pred.grun$labels)) {
     collected[[lab]] <- plotHeatmap(sceG, silent=TRUE, 
         order_columns_by="labels", main=lab,
         features=unique(unlist(all.markers[[lab]])))[[4]] 
 }
+do.call(gridExtra::grid.arrange, collected)
 ```
 
 In general, the heatmap provides a more interpretable diagnostic visualization than the plots of scores and deltas.
