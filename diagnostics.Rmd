@@ -6,7 +6,7 @@ bibliography: ref.bib
 
 ```{r, echo=FALSE, results='asis'}
 library(rebook)
-chapterPreamble()
+chapterPreamble(cache=TRUE)
 ```
 
 ## Overview
@@ -113,33 +113,46 @@ plotScoreDistribution(pred.grun, show = "delta.med", ncol = 3, show.nmads = 3)
 ## Based on marker gene expression
 
 Another simple yet effective diagnostic is to examine the expression of the marker genes for each label in the test dataset.
-We extract the identity of the markers from the metadata of the `SingleR()` results and use them in the  `plotHeatmap()` function from `r Biocpkg("scater")`, as shown below for beta cell markers.
-If a cell in the test dataset is confidently assigned to a particular label, we would expect it to have strong expression of that label's markers.
-At the very least, it should exhibit upregulation of those markers relative to cells assigned to other labels.
+The marker genes used for each label are reported in the `metadata()` of the `SingleR()` output,
+so we can simply retrieve them to visualize their (usually log-transformed) expression values across the test dataset.
+Here, we use the  `plotHeatmap()` function from `r Biocpkg("scater")` 
+to examine the expression of markers used to identify beta cells (Figure \@ref(fig:grun-beta-heat).
 
-```{r}
+```{r grun-beta-heat, fig.asp=1, fig.cap="Heatmap of log-expression values in the Grun dataset for all marker genes upregulated in beta cells in the Muraro reference dataset. Assigned labels for each cell are shown at the top."}
 all.markers <- metadata(pred.grun)$de.genes
 sceG$labels <- pred.grun$labels
 
-# Beta cell-related markers
 library(scater)
 plotHeatmap(sceG, order_columns_by="labels",
     features=unique(unlist(all.markers$beta))) 
 ```
 
-We can similarly perform this for all labels by wrapping this code in a loop, as shown below: 
+If a cell in the test dataset is confidently assigned to a particular label, 
+we would expect it to have strong expression of that label's markers.
+We would also hope that those label's markers are biologically meaningful;
+in this case, we do observe strong upregulation of insulin (_INS_) in the beta cells, 
+which is reassuring and gives greater confidence to the correctness of the assignment.
+If the identified markers are not meaningful or not consistently upregulated, 
+some skepticism towards the quality of the assignments is warranted.
 
-```{r, fig.show="hide"}
+It is straightforward to repeat this process for all labels by wrapping this code in a loop, 
+as shown below in Figure \@ref(fig:grun-beta-heat-all).
+Note that `plotHeatmap()` is not the only function that can be used for this visualization;
+we could also use `plotDots()` to create a `r CRANpkg("Seurat")`-style dot plot,
+or we could use other heatmap plotting functions such as `plotXXX()` from `r Biocpkg("dittoSeq")`.
+
+```{r grun-beta-heat-all, fig.width=10, fig.height=10, fig.cap="Heatmaps of log-expression values in the Grun dataset for all marker genes upregulated in each label in the Muraro reference dataset. Assigned labels for each cell are shown at the top."}
+collected <- list()
 for (lab in unique(pred.grun$labels)) {
-    plotHeatmap(sceG, order_columns_by=list(I(pred.grun$labels)), 
-        features=unique(unlist(all.markers[[lab]]))) 
+    collected[[lab]] <- plotHeatmap(sceG, silent=TRUE, 
+        order_columns_by="labels", main=lab,
+        features=unique(unlist(all.markers[[lab]])))[[4]] 
 }
 ```
 
-Heatmaps are particularly useful because they allow users to check that the genes are actually biologically meaningful to that cell type's identity.
-For example, beta cells would be expected to express insulin, and the fact that they do so gives more confidence to the correctness of the assignment.
-By comparison, the scores and deltas are more abstract and difficult to interpret for diagnostic purposes.
-If the identified markers are not meaningful or not consistently upregulated, some skepticism towards the quality of the assignments is warranted.
+In general, the heatmap provides a more interpretable diagnostic visualization than the plots of scores and deltas.
+However, it does require more effort to inspect and may not be feasible for large numbers of labels.
+It is also difficult to use a heatmap to determine the correctness of assignment for closely related labels.
 
 ## Session information {-}
 
