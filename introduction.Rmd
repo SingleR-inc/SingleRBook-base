@@ -1,16 +1,16 @@
 ---
 output:
   html_document
-bibliography: ../ref.bib
+bibliography: ref.bib
 ---
 
 # (PART) Basic usage {-}
 
 # Introduction
 
-```{r, echo=FALSE}
-knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
-library(BiocStyle)
+```{r, echo=FALSE, results='asis'}
+library(rebook)
+chapterPreamble(TRUE)
 ```
 
 ## Motivation
@@ -80,6 +80,6 @@ well-considered suggestions for improvements are always welcome.
 
 ## Session information {-}
 
-```{r}
-sessionInfo()
+```{r, echo=FALSE, results='asis'}
+prettySessionInfo()
 ```

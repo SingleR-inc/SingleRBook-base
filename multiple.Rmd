@@ -6,9 +6,9 @@ bibliography: ref.bib
 
 # Using multiple references
 
-```{r, echo=FALSE}
-knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
-library(BiocStyle)
+```{r, echo=FALSE, results='asis'}
+library(rebook)
+chapterPreamble(TRUE)
 ```
 
 ## Overview
@@ -164,6 +164,6 @@ though this can be addressed in the same manner as described above (i.e., replac
 
 ## Session info {-}
 
-```{r}
-sessionInfo()
+```{r, echo=FALSE, results='asis'}
+prettySessionInfo()
 ```
