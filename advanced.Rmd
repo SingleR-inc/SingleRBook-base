@@ -1,12 +1,12 @@
 ---
-bibliography: ../ref.bib
+bibliography: ref.bib
 ---
 
 # Advanced options
 
 ```{r, echo=FALSE}
-knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
-library(BiocStyle)
+library(rebook)
+chapterPreamble(TRUE)
 ```
 
 ## Preconstructed indices
@@ -38,13 +38,16 @@ counts(sce) <- as(counts(sce), "dgCMatrix")
 
 We use the `trainSingleR()` function to do all the necessary calculations 
 that are independent of the test dataset.
-(Well, almost; see comments below about `common`.)
+(Almost; see comments below about `common`.)
 This yields a list of various components that contains all identified marker genes
 and precomputed rank indices to be used in the score calculation.
+We can also turn on aggregation with `aggr.ref=TRUE` as described in Chapter \@ref(using-single-cell-references).
 
 ```{r}
 common <- intersect(rownames(sce), rownames(dice))
-trained <- trainSingleR(dice[common,], labels=dice$label.fine)
+
+set.seed(2000)
+trained <- trainSingleR(dice[common,], labels=dice$label.fine, aggr.ref=TRUE)
 ```
 
 It is then a simple matter to use the `trained` object to annotate our dataset of interest
@@ -58,7 +61,9 @@ pred <- classifySingleR(sce, trained, assay.type=1)
 table(pred$labels)
 
 # Comparing to the direct approach.
-direct <- SingleR(sce, ref=dice, assay.type.test=1, labels=dice$label.fine)
+set.seed(2000)
+direct <- SingleR(sce, ref=dice, labels=dice$label.fine,
+    assay.type.test=1, aggr.ref=TRUE)
 identical(pred$labels, direct$labels)
 ```
 
@@ -84,15 +89,10 @@ by passing `MulticoreParam()` to the `BPPARAM=` argument:
 library(BiocParallel)
 pred2a <- SingleR(sce, ref=dice, assay.type.test=1, labels=dice$label.fine,
     BPPARAM=MulticoreParam(8)) # 8 CPUs.
-identical(pred$labels, pred2a$labels) 
-```
-
-```{r, echo=FALSE}
-stopifnot(identical(pred$labels, pred2a$labels))
 ```
 
 Alternatively, one can use separate processes with `SnowParam()`, 
-which is slower but can be used on all systems including Windows.
+which is slower but can be used on all systems - including Windows, our old nemesis.
 
 ```{r}
 pred2b <- SingleR(sce, ref=dice, assay.type.test=1, labels=dice$label.fine,
@@ -101,7 +101,7 @@ identical(pred$labels, pred2b$labels)
 ```
 
 ```{r, echo=FALSE}
-stopifnot(identical(pred$labels, pred2b$labels))
+stopifnot(identical(pred2a$labels, pred2b$labels))
 ```
 
 When working on a cluster, the `BatchtoolsParam()` function allows `SingleR()` to 
@@ -118,12 +118,12 @@ which avoids the time-consuming fine-tuning iterations.
 When the reference labels are well-separated, this is probably an acceptable trade-off.
 
 ```{r}
-pred3a <- SingleR(sce, ref=dice, assay.type.test=1, labels=dice$label.main,
-    fine.tune=FALSE)
+pred3a <- SingleR(sce, ref=dice, assay.type.test=1, 
+    labels=dice$label.main, fine.tune=FALSE)
 table(pred3a$labels)
 ```
 
-Another approximation is based on the fact that the score calculation is done using a nearest-neighbors search.
+Another approximation is based on the fact that the initial score calculation is done using a nearest-neighbors search.
 By default, this is an exact seach but we can switch to an approximate algorithm via the `BNPARAM=` argument.
 In the example below, we use the [Annoy algorithm](https://github.com/spotify/annoy) 
 via the `r Biocpkg("BiocNeighbors")` framework, which yields mostly similar results.
@@ -132,7 +132,8 @@ so for small jobs it will actually be slower than the exact search.)
 
 ```{r}
 library(BiocNeighbors)
-pred3b <- SingleR(sce, ref=dice, assay.type.test=1, labels=dice$label.main,
+pred3b <- SingleR(sce, ref=dice, assay.type.test=1, 
+    labels=dice$label.main, fine.tune=FALSE, # for comparison with pred3a.
     BNPARAM=AnnoyParam())
 table(pred3a$labels, pred3b$labels)
 ```
@@ -143,6 +144,6 @@ stopifnot(mean(pred3a$labels==pred3b$labels) > 0.95)
 
 ## Session information {-}
 
-```{r}
-sessionInfo()
+```{r, echo=FALSE, results='asis'}
+prettySessionInfo()
 ```
