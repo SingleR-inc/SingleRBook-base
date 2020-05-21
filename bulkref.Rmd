@@ -137,7 +137,7 @@ where the expression values are less sensitive to differences in gene length.
 Thus, when comparing Smart-seq2 test datasets to the built-in references,
 better performance can often be achieved by processing the test counts to transcripts-per-million values.
 
-We demonstrate below using another HSC dataset that was generated using the Smart-seq2 protocol [@nestorowa2016].
+We demonstrate below using another HSC dataset that was generated using the Smart-seq2 protocol [@nestorowa2016singlecell].
 Again, we see that most of the predicted labels are related to stem cells, which is comforting.
 
 ```{r}

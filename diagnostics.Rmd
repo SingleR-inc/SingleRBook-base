@@ -16,7 +16,7 @@ that can be used to determine whether the assignments are appropriate.
 Unambiguous assignments corroborated by expression of canonical markers add confidence to the results,
 while low-confidence assignments can then be pruned out to avoid adding noise to downstream analyses.
 This chapter will demonstrate some of these common sanity checks on the pancreas datasets
-from Chapter \@ref(using-single-cell-references) [@muraro2016singlecell,@grun2016denovo].
+from Chapter \@ref(using-single-cell-references) [@muraro2016singlecell;@grun2016denovo].
 
 ```{r, results='asis', echo=FALSE}
 extractCached("pancreas.Rmd", "annotation", c("sceG", "pred.grun"))
