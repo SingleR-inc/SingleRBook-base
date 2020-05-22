@@ -3,7 +3,7 @@ knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
 library(BiocStyle)
 ```
 
-# Harmonizing labels 
+# Exploiting the cell ontology
 
 The `matchReferences()` function provides a simple yet elegant approach for label harmonization between two references.
 Each reference is used to annotate the other and the probability of mutual assignment between each pair of labels is computed.

@@ -19,7 +19,7 @@ The Bioconductor package `r Biocpkg("SingleR")` implements an automatic annotati
 for single-cell RNA sequencing (scRNA-seq) data [@aran2019reference].
 Given a reference dataset of samples (single-cell or bulk) with known labels, 
 it assigns those labels to new cells from a test dataset based on similarities in their expression profiles.
-This provides a convenient way of transferring biological knowledge across datasets. 
+This provides a convenient way of transferring biological knowledge across datasets,
 allowing users to leverage the domain expertise implicit in the creation of each reference.
 The most common application of `r Biocpkg("SingleR")` involves predicting cell type (or "state", or "kind") in a new dataset,
 a process that is facilitated by the availability of built-in references and compatibility with user-supplied datasets.
@@ -42,9 +42,9 @@ it also avoids penalizing classifications to heterogeneous labels by only requir
 3. We repeat the score calculation for all labels in the reference dataset.
 The label with the highest score is used as `r Biocpkg("SingleR")`'s prediction for this cell.
 4. We optionally perform a fine-tuning step to improve resolution between closely related labels.
-The reference dataset is subsetted to only include labels with scores close to the maximum,
-scores are recomputed using only marker genes for the subset of labels (thus focusing on the most relevant features),
-and this is iterated until one label remains.
+The reference dataset is subsetted to only include labels with scores close to the maximum;
+scores are recomputed using only marker genes for the subset of labels, thus focusing on the most relevant features;
+and this process is iterated until only one label remains.
 
 ## Quick start
 

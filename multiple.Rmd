@@ -76,19 +76,22 @@ However, this strategy identifies markers by directly comparing expression value
 meaning that the marker set is likely to contain genes responsible for uninteresting batch effects. 
 This will increase noise during the calculation of the score in each reference, 
 possibly leading to a loss of precision and a greater risk of technical variation dominating the classification results.
-It also complicates interpretation as the cell type is always qualified by its reference of origin in the results.
+The use of reference-specific labels also complicates interpretation of the results
+as the cell type is always qualified by its reference of origin.
 
 ## Using harmonized labels
 
 This strategy also involves combining the reference datasets into a single matrix 
 but the labels are now harmonized so that the same cell type is given the same label across references.
-This allows feature selection methods to identify robust sets of label-specific markers 
+This allows marker detection methods to identify robust sets of label-specific markers 
 that are more likely to generalize to other datasets.
 It also simplifies interpretation as there is no need to worry about the reference of origin for each label.
 
-Many of the `r Biocpkg("SingleR")` datasets already have their labels 
-mapped to the [Cell Ontology](https://www.ebi.ac.uk/ols/ontologies/cl).
-This provides a standard vocabulary to refer to the same cell type across multiple references.
+Many of the `r Biocpkg("SingleR")` reference datasets already have their labels 
+mapped to the [Cell Ontology](https://www.ebi.ac.uk/ols/ontologies/cl),
+which provides a standard vocabulary to refer to the same cell type across diverse datasets.
+We will describe the utility of Cell Ontology terms in more detail in Chapter \@ref(exploiting-the-cell-ontology);
+at this point, the key idea is that the same term is used for the same conceptual cell type in each reference.
 To simplify interpretation, we set `cell.ont="nonna"` to remove all samples that could not be mapped to the ontology.
 
 ```{r}

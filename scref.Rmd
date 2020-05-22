@@ -11,7 +11,8 @@ chapterPreamble(TRUE)
 
 ## Overview
 
-Another application of `r Biocpkg("SingleR")` involves using one single-cell dataset as a reference to annotate others.
+Another application of `r Biocpkg("SingleR")` involves using one single-cell dataset 
+as a reference to annotate other single-cell datasets.
 This is almost identical to the use of the built-in bulk references described in Chapter \@ref(using-the-built-in-references),
 with the main difference involving the marker detection strategy that is applied to the reference labels. 
 In particular, we identify top-ranked markers based on pairwise Wilcoxon rank sum tests or $t$-tests between labels;
@@ -25,7 +26,7 @@ but the same approach can be applied to bulk references with many replicate samp
 
 ## Annotation with test-based marker detection
 
-Here, we will use two human pancreas scRNA-seq datasets from the `r Biocpkg("scRNAseq")` package.
+To demonstrate, we will use two human pancreas scRNA-seq datasets from the `r Biocpkg("scRNAseq")` package.
 The aim is to use one pre-labelled dataset to annotate the other unlabelled dataset.
 First, we set up the @muraro2016singlecell dataset to be our reference,
 computing log-normalized expression values as discussed in Section \@ref(choices-of-assay-data).
@@ -47,7 +48,7 @@ table(sceM$label)
 
 We then set up our test dataset from @grun2016denovo, applying some basic quality control as discusssed
 [here](https://osca.bioconductor.org/grun-human-pancreas-cel-seq2.html#quality-control-8) 
-and in Section \@ref{interaction-with-quality-control}.
+and in Section \@ref(interaction-with-quality-control).
 We also compute the log-transformed values here, not because it is strictly necessary
 but so that we don't have to keep on typing `assay.type.test=1` in later calls to `SingleR()`.
 
@@ -68,7 +69,7 @@ sceG
 We run `SingleR()` as described previously but with a marker detection mode that considers the variance of expression across cells.
 Here, we will use the Wilcoxon ranked sum test to identify the top markers for each pairwise comparison between labels.
 This is slower but more appropriate for single-cell data compared to the default marker detection algorithm,
-which may fail for low-coverage data where the median for each label is often zero.
+as the latter may fail for low-coverage data where the median for each label is often zero.
 
 ```{r}
 library(SingleR)
@@ -156,12 +157,13 @@ Single-cell reference datasets provide a like-for-like comparison to our test si
 yielding a more accurate classification of the cells in the latter (hopefully).
 However, there are frequently many more samples in single-cell references compared to bulk references, 
 increasing the computational work involved in classification.
-We avoid this by aggregating cells into one "pseudo-bulk" sample per label (e.g., by averaging across log-expression values) 
-and using those as the reference, which allows us to achieve the same efficiency as the use of bulk references.
+We overcome this by aggregating cells into one "pseudo-bulk" sample per label (e.g., by averaging across log-expression values) 
+and using that as the reference profile, which allows us to achieve the same efficiency as the use of bulk references.
 
-The obvious cost of this approach is that we discard potentially useful information about the distribution of cells within each label.
+The obvious cost of this approach is that we discard potentially useful information 
+about the distribution of cells within each label.
 Cells that belong to a heterogeneous population may not be correctly assigned if they are far from the population center.
-We attempt to preserve some of this information by using $k$-means clustering within each cell 
+To preserve some of this information, we perform $k$-means clustering within each label
 to create pseudo-bulk samples that are representative of a particular region of the expression space (i.e., vector quantization).
 We create $\sqrt{N}$ clusters given a label with $N$ cells, 
 which provides a reasonable compromise between reducing computational work and preserving the label's internal distribution.

@@ -12,8 +12,9 @@ chapterPreamble(TRUE)
 ## Preconstructed indices
 
 Advanced users can split the `SingleR()` workflow into two separate training and classification steps.
-This means that training (e.g., marker detection, assembling of nearest-neighbor indices) only needs to be performed once.
-The resulting data structures can then be re-used across multiple classifications with different test datasets, 
+This means that training (e.g., marker detection, assembling of nearest-neighbor indices) only needs to be performed once
+for any reference.
+The resulting data structure can then be re-used across multiple classifications with different test datasets, 
 provided the gene annotation in the test dataset is identical to or a superset of the genes in the training set.
 To illustrate, we will consider the DICE reference dataset [@diceRef].
 
@@ -41,7 +42,8 @@ that are independent of the test dataset.
 (Almost; see comments below about `common`.)
 This yields a list of various components that contains all identified marker genes
 and precomputed rank indices to be used in the score calculation.
-We can also turn on aggregation with `aggr.ref=TRUE` as described in Chapter \@ref(using-single-cell-references).
+We can also turn on aggregation with `aggr.ref=TRUE` (Section \@ref(pseudo-bulk aggregation))
+to further reduce computational work.
 
 ```{r}
 common <- intersect(rownames(sce), rownames(dice))
@@ -50,10 +52,9 @@ set.seed(2000)
 trained <- trainSingleR(dice[common,], labels=dice$label.fine, aggr.ref=TRUE)
 ```
 
-It is then a simple matter to use the `trained` object to annotate our dataset of interest
-through the `classifySingleR()` function.
-As we can see, this yields exactly the same result as applying `SingleR()` directly;
-however, the advantage here is that `trained` can be re-used for multiple `classifySingleR()` calls - 
+We then use the `trained` object to annotate our dataset of interest through the `classifySingleR()` function.
+As we can see, this yields exactly the same result as applying `SingleR()` directly.
+The advantage here is that `trained` can be re-used for multiple `classifySingleR()` calls - 
 possibly on different datasets - without having to repeat unnecessary steps when the reference is unchanged.
 
 ```{r}
@@ -71,11 +72,11 @@ identical(pred$labels, direct$labels)
 stopifnot(identical(pred$labels, direct$labels))
 ```
 
-The big caveat is that the universe of genes in the test dataset cannot be greater than that in the reference.
+The big caveat is that the universe of genes in the test dataset must be a superset of that the reference.
 This is the reason behind the intersection to `common` genes and the subsequent subsetting of `dice`.
 Practical use of preconstructed indices is best combined with some prior information about the gene-level annotation;
 for example, we might know that we always use a particular version of the Ensembl gene models,
-so we would filter out any genes in the reference dataset that are not in the Ensembl annotation.
+so we would filter out any genes in the reference dataset that are not in our test datasets.
 
 ## Parallelization
 
@@ -104,7 +105,7 @@ identical(pred$labels, pred2b$labels)
 stopifnot(identical(pred2a$labels, pred2b$labels))
 ```
 
-When working on a cluster, the `BatchtoolsParam()` function allows `SingleR()` to 
+When working on a cluster, passing `BatchtoolsParam()` to `SingleR()` allows us to
 seamlessly interface with various job schedulers like SLURM, LSF and so on.
 This permits heavy-duty parallelization across hundreds of CPUs for highly intensive jobs,
 though often some configuration is required - 

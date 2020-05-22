@@ -13,8 +13,8 @@ chapterPreamble(cache=TRUE)
 
 In addition to the labels, `SingleR()` returns a number of helpful diagnostics about the annotation process
 that can be used to determine whether the assignments are appropriate.
-Unambiguous assignments corroborated by expression of canonical markers add confidence to the results,
-while low-confidence assignments can then be pruned out to avoid adding noise to downstream analyses.
+Unambiguous assignments corroborated by expression of canonical markers add confidence to the results;
+conversely, low-confidence assignments can be pruned out to avoid adding noise to downstream analyses.
 This chapter will demonstrate some of these common sanity checks on the pancreas datasets
 from Chapter \@ref(using-single-cell-references) [@muraro2016singlecell;@grun2016denovo].
 
@@ -116,9 +116,9 @@ Another simple yet effective diagnostic is to examine the expression of the mark
 The marker genes used for each label are reported in the `metadata()` of the `SingleR()` output,
 so we can simply retrieve them to visualize their (usually log-transformed) expression values across the test dataset.
 Here, we use the  `plotHeatmap()` function from `r Biocpkg("scater")` 
-to examine the expression of markers used to identify beta cells (Figure \@ref(fig:grun-beta-heat).
+to examine the expression of markers used to identify beta cells (Figure \@ref(fig:grun-beta-heat)).
 
-```{r grun-beta-heat, fig.asp=1, fig.cap="Heatmap of log-expression values in the Grun dataset for all marker genes upregulated in beta cells in the Muraro reference dataset. Assigned labels for each cell are shown at the top."}
+```{r grun-beta-heat, fig.asp=1, fig.cap="Heatmap of log-expression values in the Grun dataset for all marker genes upregulated in beta cells in the Muraro reference dataset. Assigned labels for each cell are shown at the top of each plot."}
 all.markers <- metadata(pred.grun)$de.genes
 sceG$labels <- pred.grun$labels
 

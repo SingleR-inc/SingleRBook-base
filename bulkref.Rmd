@@ -19,7 +19,7 @@ This approach ensures that the selected subset of features will contain genes th
 (In contrast, other approaches that treat the "other" labels as a single group do not offer this guarantee;
 see [here](https://osca.bioconductor.org/marker-detection.html#standard-application) for a discussion.)
 It also allows the fine-tuning step to aggressively improve resolution by only using marker genes 
-from comparisons involving labels that both have scores close to the maximum.
+from comparisons where both labels have scores close to the maximum.
 
 The original ("classic") marker detection algorithm used in @aran2019reference identified marker genes 
 based on their log-fold changes in each pairwise comparison.
@@ -27,7 +27,7 @@ Specifically, it used the genes with the largest positive differences in the per
 The number of genes taken from each pairwise comparison was defined as $500 (\frac{2}{3})^{\log_{2}(n)}$,
 where $n$ is the number of unique labels in the reference;
 this aimed to reduce the number of genes (and thus the computational time) as the number of labels and pairwise comparisons increased.
-It is primarily intended for reference datasets that have little or no replication,
+This classic mode is primarily intended for reference datasets that have little or no replication,
 a description that covers most of the built-in references 
 and precludes more complicated marker detection procedures (Chapter \@ref(using-single-cell-references)).
 
@@ -48,7 +48,7 @@ Our plan is to annotate each cell with the built-in ImmGen reference dataset [@I
 Calling the `ImmGenData()` function returns a `SummarizedExperiment` object 
 containing a matrix of log-expression values with sample-level labels.
 We set `ensembl=TRUE` to match the reference's gene annotation with that in the `sce` object
-(the default is to use the gene symbol).
+(the default behavior is to use the gene symbol).
 
 ```{r}
 library(SingleR)
@@ -57,7 +57,8 @@ immgen
 ```
 
 Technically speaking, each built-in dataset actually has three sets of labels that primarily differ in their resolution.
-For the purposes of this demonstration, we will use the "fine" labels in the `label.fine` metadata field.
+For the purposes of this demonstration, we will use the "fine" labels in the `label.fine` metadata field,
+which represents the highest resolution of annotation available in ImmGen.
 
 ```{r}
 head(immgen$label.fine)
@@ -67,22 +68,21 @@ Annotation is then a simple matter of calling `SingleR()` on our test (Grun) dat
 leaving the default of `de.method="classic"` to use the original marker detection scheme.
 This applies the algorithm described in Section \@ref(method-description),
 returning a `DataFrame` where each row contains prediction results for a single cell in the `sce` object.
-Labels are shown before fine-tuning (`first.labels`), after fine-tuning (`labels`) and after pruning (`pruned.labels`), 
-along with the associated scores for each label.
+Labels are provided before fine-tuning (`first.labels`), after fine-tuning (`labels`) and after pruning (`pruned.labels`);
+some of the other fields are discussed in more detail in Chapter \@ref(annotation-diagnostics).
 
 ```{r}
 # See 'Choices of assay data' for 'assay.type.test=' explanation.
 pred <- SingleR(test = sce, ref = immgen, 
     labels = immgen$label.fine, assay.type.test=1)
-pred
+colnames(pred)
 ```
 
 ## Interaction with quality control
 
-Upon summarizing the distribution of assigned labels, we see that many of them are related to stem cells, 
-though there are quite a large number of more differentiated labels mixed in.
-This is probably because - despite what its name might suggest -
-the dataset obtained by `GrunHSCData()` actually contains more than HSCs.
+Upon examining the distribution of assigned labels, we see that many of them are related to stem cells.
+However, there are quite a large number of more differentiated labels mixed in,
+which is not what we expect from a sorted population of HSCs.
 
 ```{r}
 head(sort(table(pred$labels), decreasing=TRUE))
@@ -94,6 +94,8 @@ stuff <- head(sort(table(pred$labels), decreasing=TRUE))
 stopifnot(any(!grepl("Stem", names(stuff))))
 ```
 
+This is probably because - despite what its name might suggest -
+the dataset obtained by `GrunHSCData()` actually contains more than HSCs.
 If we restrict our analysis to the sorted HSCs (obviously) and remove one low-quality batch
 (see [the analysis here](https://osca.bioconductor.org/merged-hcsc.html#quality-control-12) for the rationale)
 we can see that the distribution of cell type labels is more similar to what we might expect.
@@ -111,7 +113,7 @@ is.stem <- grepl("Stem", actual.hsc)
 stopifnot(mean(is.stem) > 0.95)
 ```
 
-Filtering on the results in the above manner is possible because `SingleR()` operates independently on each cell.
+Filtering the annotation results in the above manner is possible because `SingleR()` operates independently on each cell.
 The annotation is orthogonal to any decisions about the relative quality of the cells in the test dataset;
 the same results will be obtained regardless of whether the annotation is performed before or after quality control.
 This is logisitically convenient as it means that the annotation does not have to be repeated 
@@ -123,7 +125,7 @@ For the reference dataset, the assay matrix _must_ contain log-transformed norma
 This is because the default marker detection scheme computes log-fold changes by subtracting the medians,
 which makes little sense unless the input expression values are already log-transformed.
 For alternative schemes, this requirement may be relaxed (e.g., Wilcoxon rank sum tests do not require transformation);
-similarly, if pre-defined markers are supplied, no transformaton or normalization is necessary (see comments below for the test data).
+similarly, if pre-defined markers are supplied, no transformation or normalization is necessary.
 
 For the test data, the assay data need not be log-transformed or even (scale) normalized.
 This is because `SingleR()` computes Spearman correlations within each cell, 
