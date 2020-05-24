@@ -71,12 +71,17 @@ and instead adjusts the values to highlight any differences between labels withi
 
 ## Based on the deltas across cells
 
-We can identify poor-quality or ambiguous assignments based on the per-cell "delta", 
+We identify poor-quality or ambiguous assignments based on the per-cell "delta", 
 i.e., the difference between the score for the assigned label and the median across all labels for each cell.
+Our assumption is that most of the labels in the reference are not relevant to any given cell. 
+Thus, the median across all labels can be used as a measure of the baseline correlation,
+while the gap from the assigned label to this baseline can be used as a measure of the assignment confidence.
+
 Low deltas indicate that the assignment is uncertain, possibly because the cell's true label does not exist in the reference.
-We use the delta rather than an absolute threshold on the score as the latter is more sensitive to technical effects.
+An obvious next step is to apply a threshold on the delta to filter out these low-confidence assignments.
+We use the delta rather than the assignment score as the latter is more sensitive to technical effects.
 For example, changes in library size affect the technical noise and can increase/decrease all scores for a given cell,
-while the delta should be somewhat more robust as it focuses on the differences between scores.
+while the delta is somewhat more robust as it focuses on the differences between scores within each cell.
 
 `SingleR()` will set a threshold on the delta for each label using an outlier-based strategy.
 Specifically, we identify cells with deltas that are small outliers relative to the deltas of other cells with the same label.
@@ -118,7 +123,7 @@ so we can simply retrieve them to visualize their (usually log-transformed) expr
 Here, we use the  `plotHeatmap()` function from `r Biocpkg("scater")` 
 to examine the expression of markers used to identify beta cells (Figure \@ref(fig:grun-beta-heat)).
 
-```{r grun-beta-heat, fig.asp=1, fig.cap="Heatmap of log-expression values in the Grun dataset for all marker genes upregulated in beta cells in the Muraro reference dataset. Assigned labels for each cell are shown at the top of each plot."}
+```{r grun-beta-heat, fig.asp=1, fig.cap="Heatmap of log-expression values in the Grun dataset for all marker genes upregulated in beta cells in the Muraro reference dataset. Assigned labels for each cell are shown at the top of the plot."}
 all.markers <- metadata(pred.grun)$de.genes
 sceG$labels <- pred.grun$labels
 
@@ -141,7 +146,7 @@ Note that `plotHeatmap()` is not the only function that can be used for this vis
 we could also use `plotDots()` to create a `r CRANpkg("Seurat")`-style dot plot,
 or we could use other heatmap plotting functions such as `dittoHeatmap()` from `r Biocpkg("dittoSeq")`.
 
-```{r grun-beta-heat-all, fig.width=20, fig.height=15, fig.cap="Heatmaps of log-expression values in the Grun dataset for all marker genes upregulated in each label in the Muraro reference dataset. Assigned labels for each cell are shown at the top."}
+```{r grun-beta-heat-all, fig.width=20, fig.height=15, fig.cap="Heatmaps of log-expression values in the Grun dataset for all marker genes upregulated in each label in the Muraro reference dataset. Assigned labels for each cell are shown at the top of each plot."}
 collected <- list()
 for (lab in unique(pred.grun$labels)) {
     collected[[lab]] <- plotHeatmap(sceG, silent=TRUE, 
