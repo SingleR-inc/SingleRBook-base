@@ -108,11 +108,21 @@ table(Label=pred.grun$labels, Removed=to.remove)
 
 This entire process can be visualized using the `plotScoreDistribution()` function,
 which displays the per-label distribution of the deltas across cells (Figure \@ref(fig:score-dist-grun)).
-We can check that outlier detection in `pruneScores()` behaved sensibly,
-and we might reconsider the reliability of labels with deltas close to zero.
+We can use this plot to check that outlier detection in `pruneScores()` behaved sensibly.
+Labels with especially low deltas may warrant some additional caution in their interpretation.
 
-```{r score-dist-grun, fig.asp=1, fig.wide=TRUE, fig.cap="Distribution of deltas for the Grun dataset. Each facet represents a label in the Muraro dataset, and each point represents a cell assigned to that label or assigned to that label and pruned. For comparison, the equivalent deltas for cells assigned to other labels are also shown."}
-plotScoreDistribution(pred.grun, show = "delta.med", ncol = 3, show.nmads = 3)
+```{r score-dist-grun, fig.asp=1, fig.wide=TRUE, fig.cap="Distribution of deltas for the Grun dataset. Each facet represents a label in the Muraro dataset, and each point represents a cell assigned to that label (colored by whether it was pruned)."}
+plotDeltaDistribution(pred.grun)
+```
+
+If fine-tuning was performed, we can apply an even more stringent filter 
+based on the difference between the highest and second-highest scores after fine-tuning.
+Cells will only pass the filter if they are assigned to a label that is clearly distinguishable from any other label.
+In practice, this approach tends to be too conservative as assignments involving closely related labels are heavily penalized.
+
+```{r}
+to.remove2 <- pruneScores(pred.grun, min.diff.next=0.1)
+table(Label=pred.grun$labels, Removed=to.remove2)
 ```
 
 ## Based on marker gene expression

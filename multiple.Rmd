@@ -136,7 +136,7 @@ though we can overcome this by using harmonized labels as described below.
 
 All of the diagnostic plots in `r Biocpkg("SingleR")` will naturally operate on these combined results.
 For example, we can create a heatmap of the scores in all of the individual references
-as well as for the recomputed scores in the combined results (Figure \@ref(heat-combined)).
+as well as for the recomputed scores in the combined results (Figure \@ref(fig:heat-combined)).
 Note that scores are only recomputed for the labels predicted in the individual references,
 so all labels outside of those are simply set to `NA` - hence the swathes of grey.
 
@@ -150,7 +150,7 @@ may not be applicable across the predicted labels from the individual references
 For example, if all individual references suggest the same cell type with similar recomputed scores, 
 any delta would be low even though the assignment is highly confident.
 
-```{r delta-combined, fig.asp=2, fig.width=6}
+```{r delta-combined, fig.asp=2, fig.width=6, fig.cap="Distribution of the deltas across cells in the PBMC test dataset for each label in the Blueprint/ENCODE and Human Primary Cell Atlas reference datasets. Each point represents a cell that was assigned to that label in the combined results, colored by whether it was pruned or not in the corresponding individual reference."}
 plotDeltaDistribution(com.res2)
 ```
 
