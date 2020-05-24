@@ -79,13 +79,56 @@ possibly leading to a loss of precision and a greater risk of technical variatio
 The use of reference-specific labels also complicates interpretation of the results
 as the cell type is always qualified by its reference of origin.
 
+## Comparing scores across references
+
+Another strategy - and the default approach implemented in `SingleR()` -
+involves performing classification separately within each reference, 
+and then collating the results to choose the label with the highest score across references. 
+This is a relatively expedient approach that avoids the need for explicit harmonization 
+while also reducing exposure to reference-specific batch effects.
+
+To use this method, we simply pass multiple objects to the `ref=` and `label=` argument in `SingleR()`.
+This instructs the function to annotate the test dataset with each reference individually;
+it then collects the best labels for each cell across all references and 
+identifies the overall best-scoring label as the final prediction for that cell.
+The second step requires a recomputation of scores across a subset of relevant markers
+to ensure that these scores are comparable across references.
+
+```{r}
+com.res2 <- SingleR(test = pbmc, assay.type.test=1,
+    ref = list(BPE=bpe, HPCA=hpca), 
+    labels = list(bpe$label.main, hpca$label.main))
+
+# Check the final label from the combined assignment.
+table(com.res2$labels) 
+
+# Check the 'winning' reference for each cell.
+table(com.res2$reference) 
+```
+
+The main appeal of this approach lies in the fact that it is based on the results of annotation with individual references.
+This avoids batch effects from comparing expression values across references;
+it reduces the need for any coordination in the label scheme between references;
+and simultaneously provides the per-reference annotations in the results.
+The last feature is particularly useful as it allows for more detailed diagnostics, troubleshooting and further analysis.
+
+```{r}
+head(com.res2$orig.results$BPE$labels)
+head(com.res2$orig.results$HPCA$labels)
+```
+
+The main downside is that it is somewhat suboptimal if there are many labels that are unique to one reference,
+as markers are not identified with the aim of distinguishing a label in one reference from another label in another reference.
+The continued lack of consistency in the labels across references also complicates interpretation of the results,
+though we can overcome this by using harmonized labels as described below.
+
 ## Using harmonized labels
 
-This strategy also involves combining the reference datasets into a single matrix 
-but the labels are now harmonized so that the same cell type is given the same label across references.
-This allows marker detection methods to identify robust sets of label-specific markers 
-that are more likely to generalize to other datasets.
-It also simplifies interpretation as there is no need to worry about the reference of origin for each label.
+One of the major problems with using multiple references is the presence of study-specific nomenclature.
+For example, the concept of a B cell may be annotated as `B cells` in one reference, 
+`B_cells` in another reference, and then `B` and `B-cell` and so on in other references.
+We can overcome this by using harmonized labels where the same cell type is assigned as the same label across references,
+simplifying interpretation and ensuring that irrelevant discrepancies in labelling do not intefere with downstream analysis.
 
 Many of the `r Biocpkg("SingleR")` reference datasets already have their labels 
 mapped to the [Cell Ontology](https://www.ebi.ac.uk/ols/ontologies/cl),
@@ -98,72 +141,58 @@ To simplify interpretation, we set `cell.ont="nonna"` to remove all samples that
 hpca.ont <- HumanPrimaryCellAtlasData(ensembl=TRUE, cell.ont="nonna")
 bpe.ont <- BlueprintEncodeData(ensembl=TRUE, cell.ont="nonna")
 
+# Using the same sets of genes:
 shared <- intersect(rownames(hpca.ont), rownames(bpe.ont))
-combined.ont <- cbind(hpca.ont[shared,], bpe.ont[shared,])
-combined.ont$source <- rep(c("HPCA", "BPE"), c(ncol(hpca.ont), ncol(bpe.ont)))
+hpca.ont <- hpca.ont[shared,]
+bpe.ont <- bpe.ont[shared,]
 
 # Showing the top 10 most frequent terms:
-tab <- table(combined.ont$label.ont, combined.ont$source)
-head(tab[order(rowSums(tab), decreasing=TRUE),])
+head(sort(table(hpca.ont$label.ont)), 10)
+head(sort(table(bpe.ont$label.ont)), 10)
 ```
 
-We perform annotation with `SingleR()` as previously described.
-We set the `block=` argument in `de.args=` so as to indicate that DE genes should only be performed _within_ each reference,
-and then the statistics merged _across_ references to identify the top markers.
-This ensures that we do not directly compare expression values across references,
-which reduces the susceptibility of the marker detection to batch effects.
+The simplest way to take advantage of the standardization in terminology
+is to use `label.ont` in place of `label.main` in the previous section's `SingleR()` call.
+This yields annotations that have follow the same vocabulary regardless of the reference used for assignment.
 
 ```{r}
-# TODO: add blocking mode for default marker detection.
-com.res2 <- SingleR(pbmc, ref=combined.ont, labels=combined.ont$label.ont, 
-    assay.type.test=1)
-tab <- table(com.res2$labels)
-head(sort(tab, decreasing=TRUE))
+com.res3a <- SingleR(test = pbmc, assay.type.test=1,
+    ref = list(BPE=bpe.ont, HPCA=hpca.ont), 
+    labels = list(bpe.ont$label.ont, hpca.ont$label.ont))
+
+table(Label=com.res3a$labels, Reference=com.res3a$reference)
 ```
+
+A more advanced approach is to share information across references during the marker detection stage.
+This is done by favoring genes the exhibit upregulation consistently in multiple references,
+which increases the likelihood that those markers will generalize to other datasets.
+For classic marker detection, we achieve this by calling `getClassicMarkers()` to obtain markers for use in `SingleR()`;
+the same effect can be achieved for test-based methods in `r Biocpkg("scran")` functions by setting `block=`.
+We then use these improved markers by passing them to `genes=` as described in Section \@ref(defining-custom-markers).
+In this case, we specify `com.markers` twice in a list to indicate that we are using them for both of our references.
+
+```{r}
+com.markers <- getClassicMarkers(
+    ref = list(BPE=bpe.ont, HPCA=hpca.ont), 
+    labels = list(bpe.ont$label.ont, hpca.ont$label.ont))
+
+com.res3b <- SingleR(test = pbmc, assay.type.test=1,
+    ref = list(BPE=bpe.ont, HPCA=hpca.ont), 
+    labels = list(bpe.ont$label.ont, hpca.ont$label.ont),
+    genes = list(com.markers, com.markers))
+
+table(Label=com.res3b$labels, Reference=com.res3b$reference)
+```
+
+It is worth noting that, in the above code, the DE genes are still identified _within_ each reference
+and then the statistics are merged _across_ references to identify the top markers.
+This ensures that we do not directly compare expression values across references,
+which reduces the susceptibility of marker detection to batch effects.
 
 The most obvious problem with this approach is that it assumes that harmonized labels are available.
-This is not always the case due to the use of different (often author-specific!) naming schemes,
-which requires at best semi-automated mapping of the author-derived labels to the standard vocabulary.
+This is usually not true and requires some manual mapping of the author-provided labels to a common vocabulary.
 The mapping process also runs the risk of discarding relevant information about the biological status
 (e.g., activation status, disease condition) if there is no obvious counterpart for that state in the ontology.
-
-## Comparing scores across references
-
-The final strategy - and the default approach implemented in `SingleR()` -
-involves performing classification separately within each reference, 
-and then collating the results to choose the label with the highest score across references. 
-This is a relatively expedient approach that avoids the need for explicit harmonization 
-while also reducing exposure to reference-specific batch effects.
-
-Use of this approach simply involves passing multiple objects to the `ref=` and `label=` argument in `SingleR()`.
-This instructs the function to annotate the test dataset with each reference individually;
-it then collects the best labels for each cell across all references and 
-identifies the overall best-scoring label as the final prediction for that cell.
-The second step requires a recomputation of scores across a subset of relevant markers
-to ensure that these scores are comparable across references.
-
-```{r}
-com.res3 <- SingleR(test = pbmc, assay.type.test=1,
-    ref = list(BPE=bpe, HPCA=hpca), 
-    labels = list(bpe$label.main, hpca$label.main))
-table(com.res3$labels)
-```
-
-The main appeal of this approach lies in the fact that it is based on the results of annotation with individual references.
-This avoids batch effects from comparing expression values across references;
-it reduces the need for any coordination in the label scheme between references;
-and simultaneously provides the per-reference annotations in the results.
-The last feature is particularly useful as it allows for more detailed diagnostics, troubleshooting and further analysis.
-
-```{r}
-head(com.res3$orig.results$BPE$labels)
-head(com.res3$orig.results$HPCA$labels)
-```
-
-The main downside is that it is somewhat suboptimal if there are many reference-specific labels, 
-as markers are not identified with the aim of distinguishing a label in one reference from another label in another reference.
-The lack of harmonization in the labels also complicates interpretation of the results,
-though this can be addressed in the same manner as described above (i.e., replacing `label.main` with `label.ont`).
 
 ## Session info {-}
 
