@@ -5,6 +5,8 @@ library(rebook)
 chapterPreamble(TRUE)
 ```
 
+## Motivation
+
 As previously discussed in Section \@ref(using-harmonized-labels),
 `r Biocpkg("SingleR")` maps the labels in its references to the [Cell Ontology](https://www.ebi.ac.uk/ols/ontologies/cl).
 The most obvious advantage of doing this is to provide a standardized vocabulary with which to describe cell types,
@@ -12,6 +14,81 @@ thus facilitating integrated analyses with multiple references.
 However, another useful feature of the Cell Ontology is its hierarchical organization of terms,
 allowing us to adjust cell type annotations to the desired resolution.
 This represents a more dynamic alternative to the static `label.main` and `label.fine` options in each reference.
+
+## Basic manipulation
+
+We use the `r Biocpkg("ontoProc")` package to load in the Cell Ontology.
+This produces an `ontology_index` object (from the `r CRANpkg("ontologyIndex")` package)
+that we can query for various pieces of information.
+
+```{r}
+# TODO: wrap in utility function.
+library(ontoProc)
+bfc <- BiocFileCache::BiocFileCache(ask=FALSE)
+path <- BiocFileCache::bfcrpath(bfc, "http://purl.obolibrary.org/obo/cl.obo")
+cl <- get_ontology(path, extract_tags="everything")
+cl
+```
+
+The most immediate use of this object lies in mapping ontology terms to their plain-English descriptions.
+We can use this to translate annotations produced by `SingleR()` from the `label.ont` labels into a more interpretable form.
+
+```{r}
+head(cl$name) # short name
+head(cl$def) # longer definition
+
+library(SingleR)
+ref <- MouseRNAseqData(cell.ont="nonna")
+translated <- cl$name[ref$label.ont]
+head(translated)
+```
+
+Another interesting application involves examining the relationship between different terms.
+The ontology itself is a directed acyclic graph, so we can can convert it into `graph` object
+for advanced queries using the `r CRANpkg("igraph")` package.
+
+```{r}
+# TODO: wrap in utility function.
+parents <- cl$parents
+self <- rep(names(parents), lengths(parents))
+
+library(igraph)
+g <- make_graph(rbind(unlist(parents), self))
+g
+```
+
+For example, we can identify all descendents of a particular term of interest.
+This can be useful when searching for a cell type across multiple reference datasets,
+where consideration of descendents allows us to account for differences in the resolution of annotation in each dataset.
+
+```{r}
+term <- "CL:0000624"
+cl$name[term]
+all.kids <- names(subcomponent(g, term))
+head(cl$name[all.kids])
+```
+
+Alternatively, we might be interested in the last common ancestor for a set of terms.
+This is the furthest term (or, in some cases, multiple terms) from the root of the ontology
+that is also an ancestor of all of the terms of interest.
+It is this idea that we will be using in the next section to adjust resolution across multiple references. 
+
+```{r}
+terms <- c("CL:0000624", "CL:0000785", "CL:0000623")
+cl$name[terms]
+
+# TODO: god, put this in a function somewhere.
+all.ancestors <- lapply(terms, subcomponent, graph=g, mode="in")
+all.ancestors <- lapply(all.ancestors, names)
+common.ancestors <- Reduce(intersect, all.ancestors)
+
+ancestors.of.ancestors <- lapply(common.ancestors, subcomponent, graph=g, mode="in")
+ancestors.of.ancestors <- lapply(ancestors.of.ancestors, names)
+ancestors.of.ancestors <- mapply(setdiff, ancestors.of.ancestors, common.ancestors) 
+
+latest.common.ancestors <- setdiff(common.ancestors, unlist(ancestors.of.ancestors))
+cl$name[latest.common.ancestors]
+```
 
 ## Session information {-}
 
