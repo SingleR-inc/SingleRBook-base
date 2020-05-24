@@ -124,6 +124,8 @@ though we can overcome this by using harmonized labels as described below.
 
 ## Using harmonized labels
 
+### Sharing information during marker detection
+
 One of the major problems with using multiple references is the presence of study-specific nomenclature.
 For example, the concept of a B cell may be annotated as `B cells` in one reference, 
 `B_cells` in another reference, and then `B` and `B-cell` and so on in other references.
@@ -193,6 +195,37 @@ The most obvious problem with this approach is that it assumes that harmonized l
 This is usually not true and requires some manual mapping of the author-provided labels to a common vocabulary.
 The mapping process also runs the risk of discarding relevant information about the biological status
 (e.g., activation status, disease condition) if there is no obvious counterpart for that state in the ontology.
+
+### Manual label harmonization
+
+The `matchReferences()` function provides a simple approach for label harmonization between two references.
+Each reference is used to annotate the other and the probability of mutual assignment between each pair of labels is computed,
+i.e., for each pair of labels, what is the probability that a cell with one label is assigned the other _and_ vice versa?
+Probabilities close to 1 in Figure \@ref(fig:heat-harmony) indicate there is a 1:1 relation between that pair of labels;
+on the other hand, an all-zero probability vector indicates that a label is unique to a particular reference.
+
+```{r heat-harmony, fig.wide=TRUE, fig.asp=1, fig.cap="Heatmap of mutual assignment probabilities between the Blueprint/ENCODE reference dataset (labels in rows) and the Human primary cell atlas reference (labels in columns)."}
+library(SingleR)
+bp.se <- BlueprintEncodeData()
+hpca.se <- HumanPrimaryCellAtlasData()
+
+matched <- matchReferences(bp.se, hpca.se,
+    bp.se$label.main, hpca.se$label.main)
+pheatmap::pheatmap(matched, col=viridis::plasma(100))
+```
+
+This function can be used to guide harmonization to enforce a consistent vocabulary between two sets of labels.
+However, some manual intervention is still required in this process
+given the ambiguities posed by differences in biological systems and technologies.
+In the example above, neurons are considered to be unique to each reference 
+while smooth muscle cells in the HPCA data are incorrectly matched to fibroblasts in the Blueprint/ENCODE data.
+CD4^+^ and CD8^+^ T cells are also both assigned to "T cells", 
+so some decision about the acceptable resolution of the harmonized labels is required here.
+
+As an aside, we can also use this function to identify the matching clusters between two independent scRNA-seq analyses.
+This involves substituting the cluster assignments as proxies for the labels,
+allowing us to match up clusters and integrate conclusions from multiple datasets 
+without the difficulties of batch correction and reclustering.
 
 ## Session info {-}
 
