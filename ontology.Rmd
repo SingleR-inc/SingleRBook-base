@@ -32,6 +32,7 @@ cl
 
 The most immediate use of this object lies in mapping ontology terms to their plain-English descriptions.
 We can use this to translate annotations produced by `SingleR()` from the `label.ont` labels into a more interpretable form.
+We demonstrate this approach using `r Biocpkg("SingleR")`'s collection of mouse RNA-seq references [@aran2019reference].
 
 ```{r}
 head(cl$name) # short name
@@ -46,6 +47,7 @@ head(translated)
 Another interesting application involves examining the relationship between different terms.
 The ontology itself is a directed acyclic graph, so we can can convert it into `graph` object
 for advanced queries using the `r CRANpkg("igraph")` package.
+Each edge represents an "is a" relationship where each vertex represents a specialized case of the concept of the parent node.
 
 ```{r}
 # TODO: wrap in utility function.
@@ -57,9 +59,10 @@ g <- make_graph(rbind(unlist(parents), self))
 g
 ```
 
-For example, we can identify all descendents of a particular term of interest.
-This can be useful when searching for a cell type across multiple reference datasets,
-where consideration of descendents allows us to account for differences in the resolution of annotation in each dataset.
+One query involves identifying all descendents of a particular term of interest.
+This can be useful when searching for a cell type in the presence of variable annotation resolution;
+for example, a search for "epithelial cell" can be configured to pick up all child terms 
+such as "endothelial cell" and "ependymal cell".
 
 ```{r}
 term <- "CL:0000624"
@@ -68,10 +71,10 @@ all.kids <- names(subcomponent(g, term))
 head(cl$name[all.kids])
 ```
 
-Alternatively, we might be interested in the last common ancestor for a set of terms.
-This is the furthest term (or, in some cases, multiple terms) from the root of the ontology
+Alternatively, we might be interested in the last common ancestor (LCA) for a set of terms.
+This is the furthest term - or, in some cases, multiple terms - from the root of the ontology
 that is also an ancestor of all of the terms of interest.
-It is this idea that we will be using in the next section to adjust resolution across multiple references. 
+We will use this LCA concept in the next section to adjust resolution across multiple references. 
 
 ```{r}
 terms <- c("CL:0000624", "CL:0000785", "CL:0000623")
@@ -90,8 +93,105 @@ latest.common.ancestors <- setdiff(common.ancestors, unlist(ancestors.of.ancesto
 cl$name[latest.common.ancestors]
 ```
 
-## Session information {-}
+## Adjusting resolution
+
+We can use the ontology graph to adjust the resolution of the reference labels by rolling up overly-specific terms to their LCA.
+The `findCommonAncestors()` utility takes a set of terms and returns a list of potential LCAs for various subsets of those terms.
+Users can inspect this list to identify LCAs at the desired resolution and then map their descendent terms to those LCAs.
 
 ```{r}
+findCommonAncestors <- function(..., g, remove.self=TRUE, names=NULL) {
+    terms <- list(...)
+    if (is.null(names(terms))) {
+        names(terms) <- sprintf("set%i", seq_along(terms))
+    }
+
+    all.terms <- unique(unlist(terms))
+    all.ancestors <- lapply(all.terms, subcomponent, graph=g, mode="in")
+    all.ancestors <- lapply(all.ancestors, names)
+    by.ancestor <- split(
+        rep(all.terms, lengths(all.ancestors)),
+        unlist(all.ancestors)
+    )
+
+    # Removing ancestor nodes with the same count as its children.
+    available <- names(by.ancestor)
+    for (i in available) {
+        if (!i %in% names(by.ancestor)) {
+            next
+        }
+
+        counts <- lengths(by.ancestor)
+        cur.ancestors <- subcomponent(g, i, mode="in")
+        cur.ancestors <- setdiff(names(cur.ancestors), i)
+        drop <- cur.ancestors[counts[i]==counts[cur.ancestors]]
+        by.ancestor <- by.ancestor[!names(by.ancestor) %in% drop]
+    }
+
+    if (remove.self) {
+        by.ancestor <- by.ancestor[lengths(by.ancestor) > 1L]
+    }
+    by.ancestor <- by.ancestor[order(lengths(by.ancestor))] # most specific terms first.
+
+    # Decorating the output.
+    for (i in names(by.ancestor)) {
+        current <- by.ancestor[[i]]
+        df <- DataFrame(row.names=current)
+
+        curout <- list()
+        if (!is.null(names)) {
+            curout$name <- unname(names[i])
+            df$name <- names[current]
+        }
+
+        presence <- list()
+        for (b in names(terms)) {
+            presence[[b]] <- current %in% terms[[b]]
+        }
+        df <- cbind(df, do.call(DataFrame, presence))
+
+        curout$descendents <- df
+        by.ancestor[[i]] <- curout
+    }
+
+    by.ancestor
+}
+
+lca <- findCommonAncestors(ref$label.ont, g=g, names=cl$name)
+head(lca)
+```
+
+We can also use this function to synchronize multiple sets of terms to the same resolution.
+Here, we consider the ImmGen dataset [@ImmGenRef], which provides highly resolved annotation of immune cell types.
+The `findCommonAncestors()` function specifies the origins of the descendents for each LCA,
+allowing us to focus on LCAs that have representatives in both sets of terms.
+
+```{r}
+ref2 <- ImmGenData(cell.ont="nonna")
+lca2 <- findCommonAncestors(MouseRNA=ref$label.ont,
+    ImmGen=ref2$label.ont, g=g, names=cl$name)
+head(lca2)
+```
+
+For example, we might notice that the mouse RNA-seq reference only has a single "T cell" term.
+To synchronize resolution across references, 
+we would need to roll up all of the ImmGen's finely resolved subsets into that LCA as shown below.
+Of course, this results in some loss of precision and information;
+whether this is an acceptable price for simpler interpretation is a decision that is left to the user.
+
+```{r}
+children <- lca2$`CL:0000084`$descendents
+children
+
+# Synchronization:
+synced.mm <- ref$label.ont
+synced.mm[synced.mm %in% rownames(children)] <- "CL:0000084"
+synced.ig <- ref2$label.ont
+synced.ig[synced.ig %in% rownames(children)] <- "CL:0000084"
+```
+
+## Session information {-}
+
+```{r, echo=FALSE, results="asis"}
 prettySessionInfo()
 ```
