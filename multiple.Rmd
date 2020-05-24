@@ -145,7 +145,7 @@ plotScoreHeatmap(com.res2)
 ```
 
 The deltas for each individual reference can also be plotted with `plotDeltaDistribution()` (Figure \@ref(fig:delta-combined)).
-No deltas are shown for the recomputed scores as the assumption described in Section \@ref(Based-on-the-deltas-across-cells)
+No deltas are shown for the recomputed scores as the assumption described in Section \@ref(based-on-the-deltas-across-cells)
 may not be applicable across the predicted labels from the individual references.
 For example, if all individual references suggest the same cell type with similar recomputed scores, 
 any delta would be low even though the assignment is highly confident.
