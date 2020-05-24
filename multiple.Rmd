@@ -81,6 +81,8 @@ as the cell type is always qualified by its reference of origin.
 
 ## Comparing scores across references
 
+### Combining inferences from individual references
+
 Another strategy - and the default approach implemented in `SingleR()` -
 involves performing classification separately within each reference, 
 and then collating the results to choose the label with the highest score across references. 
@@ -88,11 +90,19 @@ This is a relatively expedient approach that avoids the need for explicit harmon
 while also reducing exposure to reference-specific batch effects.
 
 To use this method, we simply pass multiple objects to the `ref=` and `label=` argument in `SingleR()`.
-This instructs the function to annotate the test dataset with each reference individually;
-it then collects the best labels for each cell across all references and 
-identifies the overall best-scoring label as the final prediction for that cell.
-The second step requires a recomputation of scores across a subset of relevant markers
-to ensure that these scores are comparable across references.
+The combining strategy is as follows:
+
+1. The function first annotates the test dataset with each reference individually
+in the same manner as described in Section \@ref(method-description).
+This step is almost equivalent to simply looping over all individual references and running `SingleR()` on each.
+2. For each cell, the function collects its predicted labels across all references.
+In doing so, it also identifies the union of markers that are upregulated in the predicted label in each reference.
+3. The function identifies the overall best-scoring label as the final prediction for that cell.
+This step involves a recomputation of the scores across the identified marker subset 
+to ensure that these scores are derived from the same set of genes (and are thus comparable across references).
+
+The function will then return a `DataFrame` of combined results for each cell in the test dataset,
+including the overall label and the reference from which it was assigned.
 
 ```{r}
 com.res2 <- SingleR(test = pbmc, assay.type.test=1,
@@ -121,6 +131,43 @@ The main downside is that it is somewhat suboptimal if there are many labels tha
 as markers are not identified with the aim of distinguishing a label in one reference from another label in another reference.
 The continued lack of consistency in the labels across references also complicates interpretation of the results,
 though we can overcome this by using harmonized labels as described below.
+
+### Combined diagnostics
+
+All of the diagnostic plots in `r Biocpkg("SingleR")` will naturally operate on these combined results.
+For example, we can create a heatmap of the scores in all of the individual references
+as well as for the recomputed scores in the combined results (Figure \@ref(heat-combined)).
+Note that scores are only recomputed for the labels predicted in the individual references,
+so all labels outside of those are simply set to `NA` - hence the swathes of grey.
+
+```{r heat-combined, fig.asp=2, fig.width=6, fig.cap="Heatmaps of assignment scores for each cell in the PBMC test dataset after being assigned to the Blueprint/ENCODE and Human Primary Cell Atlas reference datasets. One heatmap is shown for the recomputed scores and the scores from each individual reference. The annotation at the top of each heatmap represents the final combined prediction for each cell."}
+plotScoreHeatmap(com.res2)
+```
+
+The deltas for each individual reference can also be plotted with `plotDeltaDistribution()` (Figure \@ref(fig:delta-combined)).
+No deltas are shown for the recomputed scores as the assumption described in Section \@ref(Based-on-the-deltas-across-cells)
+may not be applicable across the predicted labels from the individual references.
+For example, if all individual references suggest the same cell type with similar recomputed scores, 
+any delta would be low even though the assignment is highly confident.
+
+```{r delta-combined, fig.asp=2, fig.width=6}
+plotDeltaDistribution(com.res2)
+```
+
+We can similarly extract marker genes to use in heatmaps as described in Section \@ref(based-on-marker-gene-expression).
+As annotation was performed to each individual reference,
+we can simply extract the marker genes from the nested `DataFrame`s as shown in Figure \@ref(fig:pbmc-mono-heat).
+
+```{r pbmc-mono-heat, fig.asp=1, fig.cap="Heatmap of log-expression values in the PBMC dataset for all marker genes upregulated in monocytes in the Blueprint/ENCODE and Human Primary Cell Atlas reference datasets. Combined labels for each cell are shown at the top."}
+hpca.markers <- metadata(com.res2$orig.results$HPCA)$de.genes
+bpe.markers <- metadata(com.res2$orig.results$BPE)$de.genes
+mono.markers <- unique(unlist(hpca.markers$Monocyte, bpe.markers$Monocytes))
+
+library(scater)
+plotHeatmap(logNormCounts(pbmc), 
+    order_columns_by=list(I(com.res2$labels)),
+    features=mono.markers)
+```
 
 ## Using harmonized labels
 
