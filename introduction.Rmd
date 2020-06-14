@@ -22,7 +22,7 @@ it assigns those labels to new cells from a test dataset based on similarities i
 This provides a convenient way of transferring biological knowledge across datasets,
 allowing users to leverage the domain expertise implicit in the creation of each reference.
 The most common application of `r Biocpkg("SingleR")` involves predicting cell type (or "state", or "kind") in a new dataset,
-a process that is facilitated by the availability of built-in references and compatibility with user-supplied datasets.
+a process that is facilitated by the availability of curated references and compatibility with user-supplied datasets.
 In this manner, the burden of manually interpreting clusters and defining marker genes only has to be done once, for the reference dataset, and this knowledge can be propagated to new datasets in an automated manner.
 
 ## Method description
@@ -49,7 +49,7 @@ and this process is iterated until only one label remains.
 ## Quick start
 
 We will demonstrate the use of `SingleR()` on a classic 10X Genomics dataset [@zheng2017massively]
-with the built-in Human Primary Cell Atlas dataset [@hpcaRef] as the reference.
+with the Human Primary Cell Atlas dataset [@hpcaRef] as the reference.
 
 ```{r}
 # Loading test data.
@@ -57,10 +57,11 @@ library(TENxPBMCData)
 new.data <- TENxPBMCData("pbmc4k")
 
 # Loading reference data with Ensembl annotations.
-library(SingleR)
+library(celldex)
 ref.data <- HumanPrimaryCellAtlasData(ensembl=TRUE)
 
 # Performing predictions.
+library(SingleR)
 predictions <- SingleR(test=new.data, assay.type.test=1, 
     ref=ref.data, labels=ref.data$label.main)
 

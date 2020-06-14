@@ -16,10 +16,10 @@ This means that training (e.g., marker detection, assembling of nearest-neighbor
 for any reference.
 The resulting data structure can then be re-used across multiple classifications with different test datasets, 
 provided the gene annotation in the test dataset is identical to or a superset of the genes in the training set.
-To illustrate, we will consider the DICE reference dataset [@diceRef].
+To illustrate, we will consider the DICE reference dataset [@diceRef] from the `r Biocpkg("celldex")` package.
 
 ```{r}
-library(SingleR)
+library(celldex)
 dice <- DatabaseImmuneCellExpressionData(ensembl=TRUE)
 dice
 table(dice$label.fine)
@@ -48,6 +48,7 @@ to further reduce computational work.
 ```{r}
 common <- intersect(rownames(sce), rownames(dice))
 
+library(SingleR)
 set.seed(2000)
 trained <- trainSingleR(dice[common,], labels=dice$label.fine, aggr.ref=TRUE)
 ```

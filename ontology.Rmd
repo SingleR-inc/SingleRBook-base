@@ -32,13 +32,13 @@ cl
 
 The most immediate use of this object lies in mapping ontology terms to their plain-English descriptions.
 We can use this to translate annotations produced by `SingleR()` from the `label.ont` labels into a more interpretable form.
-We demonstrate this approach using `r Biocpkg("SingleR")`'s collection of mouse RNA-seq references [@aran2019reference].
+We demonstrate this approach using `r Biocpkg("celldex")`'s collection of mouse RNA-seq references [@aran2019reference].
 
 ```{r}
 head(cl$name) # short name
 head(cl$def) # longer definition
 
-library(SingleR)
+library(celldex)
 ref <- MouseRNAseqData(cell.ont="nonna")
 translated <- cl$name[ref$label.ont]
 head(translated)

@@ -37,6 +37,8 @@ we use the `plotScoreHeatmap()` function to visualize the score matrix (Figure \
 Here, the key is to examine the spread of scores within each cell, i.e., down the columns of the heatmap.
 Similar scores for a group of labels indicates that the assignment is uncertain for those columns,
 though this may be acceptable if the uncertainty is distributed across closely related cell types.
+(Note that the assigned label for a cell may not be the visually top-scoring label if fine-tuning is applied,
+as the only the pre-tuned scores are directly comparable across all labels.)
 
 ```{r score-heatmap-grun, fig.cap="Heatmap of normalized scores for the Grun dataset. Each cell is a column while each row is a label in the reference Muraro dataset. The final label (after fine-tuning) for each cell is shown in the top color bar."}
 library(SingleR)

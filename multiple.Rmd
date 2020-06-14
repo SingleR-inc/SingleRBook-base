@@ -28,14 +28,14 @@ Several strategies are available to combine inferences from multiple references:
 
 This chapter discusses the various strengths and weaknesses of each strategy
 and provides some practical demonstrations of each.
-Here, we will use the HPCA and BlueprintEncode datasets as our references
+Here, we will use the HPCA and Blueprint/ENCODE datasets as our references
 and (yet another) PBMC dataset as the test.
 
 ```{r}
 library(TENxPBMCData)
 pbmc <- TENxPBMCData("pbmc8k")
 
-library(SingleR)
+library(celldex)
 hpca <- HumanPrimaryCellAtlasData(ensembl=TRUE)
 bpe <- BlueprintEncodeData(ensembl=TRUE)
 ```
@@ -68,6 +68,7 @@ combined <- cbind(hpca2[shared,], bpe2[shared,])
 It is then straightforward to perform annotation with the usual methods.
 
 ```{r}
+library(SingleR)
 com.res1 <- SingleR(pbmc, ref=combined, labels=combined$label.main, assay.type.test=1)
 table(com.res1$labels)
 ```

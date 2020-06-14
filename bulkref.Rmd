@@ -44,19 +44,21 @@ sce <- GrunHSCData(ensembl=TRUE)
 sce
 ```
 
-Our plan is to annotate each cell with the built-in ImmGen reference dataset [@ImmGenRef].
+Our plan is to annotate each cell with the ImmGen reference dataset [@ImmGenRef] from the `r Biocpkg("celldex")` package.
+This and other references were originally built into `r Biocpkg("SingleR")`
+but have since been migrated to a separate package for more general use throughout Bioconductor.
 Calling the `ImmGenData()` function returns a `SummarizedExperiment` object 
 containing a matrix of log-expression values with sample-level labels.
 We set `ensembl=TRUE` to match the reference's gene annotation with that in the `sce` object
 (the default behavior is to use the gene symbol).
 
 ```{r}
-library(SingleR)
+library(celldex)
 immgen <- ImmGenData(ensembl=TRUE)
 immgen
 ```
 
-Technically speaking, each built-in dataset actually has three sets of labels that primarily differ in their resolution.
+Each `r Biocpkg("celldex")` dataset actually has three sets of labels that primarily differ in their resolution.
 For the purposes of this demonstration, we will use the "fine" labels in the `label.fine` metadata field,
 which represents the highest resolution of annotation available in ImmGen.
 
@@ -72,6 +74,8 @@ Labels are provided before fine-tuning (`first.labels`), after fine-tuning (`lab
 some of the other fields are discussed in more detail in Chapter \@ref(annotation-diagnostics).
 
 ```{r}
+library(SingleR)
+
 # See 'Choices of assay data' for 'assay.type.test=' explanation.
 pred <- SingleR(test = sce, ref = immgen, 
     labels = immgen$label.fine, assay.type.test=1)
