@@ -2,7 +2,7 @@
 bibliography: ref.bib
 ---
 
-# Using the built-in references
+# Using the classic mode
 
 ```{r, echo=FALSE, results='asis'}
 library(rebook)
@@ -26,12 +26,12 @@ based on their log-fold changes in each pairwise comparison.
 Specifically, it used the genes with the largest positive differences in the per-label median log-expression values between labels.
 The number of genes taken from each pairwise comparison was defined as $500 (\frac{2}{3})^{\log_{2}(n)}$,
 where $n$ is the number of unique labels in the reference;
-this aimed to reduce the number of genes (and thus the computational time) as the number of labels and pairwise comparisons increased.
-This classic mode is primarily intended for reference datasets that have little or no replication,
-a description that covers most of the built-in references 
-and precludes more complicated marker detection procedures (Chapter \@ref(using-single-cell-references)).
+this scheme aimed to reduce the number of genes (and thus the computational time) as the number of labels and pairwise comparisons increased.
+Classic mode is primarily intended for reference datasets that have little or no replication,
+a description that covers many of the bulk-derived references 
+and precludes more complicated marker detection procedures (Chapter \@ref(more-markers)).
 
-## Annotation with default marker detection 
+## Annotation the test dataset
 
 For demonstration purposes, we will use the @grun2016denovo haematopoietic stem cell (HSC)
 dataset from the `r Biocpkg("scRNAseq")` package.
@@ -44,13 +44,12 @@ sce <- GrunHSCData(ensembl=TRUE)
 sce
 ```
 
-Our plan is to annotate each cell with the ImmGen reference dataset [@ImmGenRef] from the `r Biocpkg("celldex")` package.
-This and other references were originally built into `r Biocpkg("SingleR")`
-but have since been migrated to a separate package for more general use throughout Bioconductor.
+Our aim is to annotate each cell with the ImmGen reference dataset [@ImmGenRef] from the `r Biocpkg("celldex")` package.
+(Some further comments on the choice of reference are provided below in Section \@ref(reference-choice).)
 Calling the `ImmGenData()` function returns a `SummarizedExperiment` object 
 containing a matrix of log-expression values with sample-level labels.
-We set `ensembl=TRUE` to match the reference's gene annotation with that in the `sce` object
-(the default behavior is to use the gene symbol).
+We also set `ensembl=TRUE` to match the reference's gene annotation with that in the `sce` object -
+the default behavior is to use the gene symbol.
 
 ```{r}
 library(celldex)
@@ -60,13 +59,13 @@ immgen
 
 Each `r Biocpkg("celldex")` dataset actually has three sets of labels that primarily differ in their resolution.
 For the purposes of this demonstration, we will use the "fine" labels in the `label.fine` metadata field,
-which represents the highest resolution of annotation available in ImmGen.
+which represents the highest resolution of annotation available for this dataset.
 
 ```{r}
 head(immgen$label.fine)
 ```
 
-Annotation is then a simple matter of calling `SingleR()` on our test (Grun) dataset and the reference (ImmGen) dataset,
+We perform annotation by calling `SingleR()` on our test (Grun) dataset and the reference (ImmGen) dataset,
 leaving the default of `de.method="classic"` to use the original marker detection scheme.
 This applies the algorithm described in Section \@ref(method-description),
 returning a `DataFrame` where each row contains prediction results for a single cell in the `sce` object.
@@ -103,8 +102,7 @@ the dataset obtained by `GrunHSCData()` actually contains more than HSCs.
 If we restrict our analysis to the sorted HSCs (obviously) and remove one low-quality batch
 (see [the analysis here](https://osca.bioconductor.org/merged-hcsc.html#quality-control-12) for the rationale)
 we can see that the distribution of cell type labels is more similar to what we might expect.
-Low-quality cells - typically those with low library sizes and low numbers of detected genes -
-lack information for accurate label assignment and often need to be removed to enable interpretation of the results.
+Low-quality cells lack information for accurate label assignment and need to be removed to enable interpretation of the results.
 
 ```{r}
 actual.hsc <- pred$labels[sce$protocol=="sorted hematopoietic stem cells" & sce$sample!="JC4"]
@@ -117,7 +115,7 @@ is.stem <- grepl("Stem", actual.hsc)
 stopifnot(mean(is.stem) > 0.95)
 ```
 
-Filtering the annotation results in the above manner is possible because `SingleR()` operates independently on each cell.
+Filtering the annotation results in the above manner is valid because `SingleR()` operates independently on each test cell.
 The annotation is orthogonal to any decisions about the relative quality of the cells in the test dataset;
 the same results will be obtained regardless of whether the annotation is performed before or after quality control.
 This is logisitically convenient as it means that the annotation does not have to be repeated 
@@ -137,10 +135,10 @@ which is unaffected by monotonic transformations like cell-specific scaling or l
 It is perfectly satisfactory to provide the raw counts for the test dataset to `SingleR()`,
 which is the reason for setting `assay.type.test=1` in our previous `SingleR()` call for the Grun dataset.
 
-The exception to this rule occurs when comparing data from full-length technologies to the built-in references.
-The built-in references are constructed to be comparable to unique molecular identifier (UMI) protocols,
+The exception to this rule occurs when comparing data from full-length technologies to the `r Biocpkg("celldex")` references.
+These references are intended to be comparable to data from unique molecular identifier (UMI) protocols
 where the expression values are less sensitive to differences in gene length.
-Thus, when comparing Smart-seq2 test datasets to the built-in references,
+Thus, when annotating Smart-seq2 test datasets against the `r Biocpkg("celldex")` references,
 better performance can often be achieved by processing the test counts to transcripts-per-million values.
 
 We demonstrate below using another HSC dataset that was generated using the Smart-seq2 protocol [@nestorowa2016singlecell].
@@ -171,6 +169,22 @@ head(sort(table(pred$labels), decreasing=TRUE), 10)
 is.stem <- grepl("Stem", pred$labels)
 stopifnot(mean(is.stem) > 0.95)
 ```
+
+## Comments on choice of references {#reference-choice}
+
+Unsurprisingly, the choice of reference has a major impact on the annotation results.
+We need to pick a reference that contains a superset of the labels that we expect to be present in our test dataset.
+Whether the original authors assigned appropriate labels to the reference samples is largely taken as a matter of faith;
+it is not entirely unexpected that some references are "better" than others depending on the quality of sample preparation.
+We would also prefer a reference that is generated from a similar technology or protocol as our test dataset,
+though this is usually not an issue when using `SingleR()` to annotate well-defined cell types.
+
+Users are advised to read the `r Biocpkg("celldex", vignette="userguide", "relevant vignette")` 
+for more details about the available references as well as some recommendations on which to use.
+(As an aside, the ImmGen dataset and other references were originally supplied along with `r Biocpkg("SingleR")` itself
+but have since been migrated to the separate `r Biocpkg("celldex")` package for more general use throughout Bioconductor.)
+Of course, as we shall see in the next Chapter, it is entirely possible to supply your own reference datasets instead; 
+all we need are log-expression values and a set of labels for the cells or samples.
 
 ## Session information {-}
 

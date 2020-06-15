@@ -2,7 +2,7 @@
 bibliography: ref.bib
 ---
 
-# Using single-cell references
+# Controlling marker detection {#more-markers}
 
 ```{r, echo=FALSE, results='asis'}
 library(rebook)
@@ -11,18 +11,19 @@ chapterPreamble(TRUE)
 
 ## Overview
 
-Another application of `r Biocpkg("SingleR")` involves using one single-cell dataset 
-as a reference to annotate other single-cell datasets.
-This is almost identical to the use of the built-in bulk references described in Chapter \@ref(using-the-built-in-references),
-with the main difference involving the marker detection strategy that is applied to the reference labels. 
+One of the most important steps in `r Biocpkg("SingleR")` (beyond the choice of reference, of course)
+is the derivation of the marker genes used in the score calculation.
+We have already introduced the classic approach in the previous chapter,
+but it is similarly straightforward to perform marker detection with conventional statistical tests.
 In particular, we identify top-ranked markers based on pairwise Wilcoxon rank sum tests or $t$-tests between labels;
 this allows us to account for the variability across cells to choose genes that are robustly upregulated in each label.
 
-Despite the name of this chapter, the functionality described here is not limited to single-cell references.
-The determining factor is whether a dataset contains enough samples for each label
-to permit the use of statistical tests for marker detection.
-This scenario is most common for single-cell references 
-but the same approach can be applied to bulk references with many replicate samples.
+The availability of variance-aware marker detection methods is most relevant for reference datasets
+that contain a reasonable number (i.e., at least two) of replicate samples for each label.
+An obvious use case is that of single-cell datasets that are used as a reference to annotate other single-cell datasets.
+It is also possible for users to supply their own custom marker lists to `SingleR()`,
+facilitating incorporation of prior biological knowledge into the annotation process.
+We will demonstrate these capabilities below in this chapter.
 
 ## Annotation with test-based marker detection
 

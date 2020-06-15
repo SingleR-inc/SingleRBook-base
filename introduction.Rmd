@@ -48,7 +48,7 @@ and this process is iterated until only one label remains.
 
 ## Quick start
 
-We will demonstrate the use of `SingleR()` on a classic 10X Genomics dataset [@zheng2017massively]
+We will demonstrate the use of `SingleR()` on a well-known 10X Genomics dataset [@zheng2017massively]
 with the Human Primary Cell Atlas dataset [@hpcaRef] as the reference.
 
 ```{r}
