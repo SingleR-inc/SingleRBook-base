@@ -2,9 +2,9 @@
 bibliography: ref.bib
 ---
 
-# (PART) Workflows {-}
+# (PART) Case studies {-}
 
-# Cross-annotating pancreas
+# Cross-annotating human pancreas
 
 ```{r, echo=FALSE, results="asis"}
 library(rebook)
@@ -21,7 +21,7 @@ sceM <- MuraroPancreasData()
 sceM <- sceM[,!is.na(sceM$label) & sceM$label!="unclear"] 
 ```
 
-We also need to compute log-expression values for use in marker detection inside `SingleR()`.
+We compute log-expression values for use in marker detection inside `SingleR()`.
 
 ```{r normalize-muraro}
 library(scater)
@@ -49,7 +49,7 @@ qc <- quickPerCellQC(colData(sceG),
 sceG <- sceG[,!qc$discard]
 ```
 
-Technically speaking, this does not need log-expression values but we compute them anyway for convenience.
+Technically speaking, the test dataset does not need log-expression values but we compute them anyway for convenience.
 
 ```{r normalize-grun}
 sceG <- logNormCounts(sceG)
@@ -98,6 +98,7 @@ library(scater)
 collected <- list()
 all.markers <- metadata(pred.grun)$de.genes
 
+sceG$labels <- pred.grun$labels
 for (lab in unique(pred.grun$labels)) {
     collected[[lab]] <- plotHeatmap(sceG, silent=TRUE, 
         order_columns_by="labels", main=lab,
@@ -135,9 +136,9 @@ stopifnot(rdx > 0.8)
 ```
 
 We proceed to the most important part of the analysis.
-Yes, that's right, the $t$-SNE plot (Figure \@ref(unref-pancreas-label-tsne)).
+Yes, that's right, the $t$-SNE plot (Figure \@ref(fig:unref-pancreas-label-tsne)).
 
-```{r unref-pancreas-label-tsne, fig.cap="$t$-SNE plot of the Grun dataset, where each point is a cell and is colored by the assigned cluster. Reference labels are also placed on the median coordinate across all cells assigned with that label."}
+```{r unref-pancreas-label-tsne, fig.cap="$t$-SNE plot of the Grun dataset, where each point is a cell and is colored by the assigned cluster. Reference labels from the Muraro dataset are also placed on the median coordinate across all cells assigned with that label."}
 set.seed(101010100)
 sceG <- runTSNE(sceG, dimred="PCA")
 plotTSNE(sceG, colour_by="cluster", text_colour="red",
@@ -146,6 +147,6 @@ plotTSNE(sceG, colour_by="cluster", text_colour="red",
 
 ## Session information {-}
 
-```{r, results='asis'}
+```{r, echo=FALSE, results='asis'}
 prettySessionInfo()
 ```
