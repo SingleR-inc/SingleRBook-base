@@ -13,29 +13,30 @@ chapterPreamble(cache=TRUE)
 
 ## Loading the data
 
-We load the @muraro2016singlecell dataset as our reference, 
-removing unlabelled cells or cells without a clear label.
-We also need to compute log-expression values for use in `SingleR()`.
+We load the @muraro2016singlecell dataset as our reference, removing unlabelled cells or cells without a clear label.
 
 ```{r loading-muraro}
 library(scRNAseq)
 sceM <- MuraroPancreasData()
-
 sceM <- sceM[,!is.na(sceM$label) & sceM$label!="unclear"] 
+```
 
+We also need to compute log-expression values for use in marker detection inside `SingleR()`.
+
+```{r normalize-muraro}
 library(scater)
 sceM <- logNormCounts(sceM)
 ```
 
+We examine the distribution of labels in this reference.
+
 ```{r}
-# Examining the distribution of labels in this reference.
 table(sceM$label)
 ```
 
 We load the @grun2016denovo dataset as our test,
 applying some basic quality control to remove low-quality cells in some of the batches
 (see [here](https://osca.bioconductor.org/grun-human-pancreas-cel-seq2.html#quality-control-8) for details).
-Technically speaking, this does not need log-expression values but we compute them anyway for convenience.
 
 ```{r loading-grun}
 sceG <- GrunPancreasData()
@@ -46,17 +47,17 @@ qc <- quickPerCellQC(colData(sceG),
     batch=sceG$donor,
     subset=sceG$donor %in% c("D17", "D7", "D2"))
 sceG <- sceG[,!qc$discard]
-
-sceG <- logNormCounts(sceG)
 ```
 
-```{r}
-ncol(sceG)
+Technically speaking, this does not need log-expression values but we compute them anyway for convenience.
+
+```{r normalize-grun}
+sceG <- logNormCounts(sceG)
 ```
 
 ## Applying the annotation
 
-We apply `SingleR()` with Wilcoxon rank sum test-based marker detection to annotate the Grun dataset.
+We apply `SingleR()` with Wilcoxon rank sum test-based marker detection to annotate the Grun dataset with the Muraro labels.
 
 ```{r annotation}
 library(SingleR)
@@ -69,7 +70,79 @@ We examine the distribution of predicted labels:
 table(pred.grun$labels)
 ```
 
+We can also examine the number of discarded cells for each label:
+
+```{r}
+table(Label=pred.grun$labels,
+    Lost=is.na(pred.grun$pruned.labels))
+```
+
 ## Diagnostics
+
+We visualize the assignment scores for each label in Figure \@ref(fig:unref-pancreas-score-heatmap).
+
+```{r unref-pancreas-score-heatmap, fig.cap="Heatmap of the (normalized) assignment scores for each cell (column) in the Grun test dataset with respect to each label (row) in the Muraro reference dataset. The final assignment for each cell is shown in the annotation bar at the top."}
+plotScoreHeatmap(pred.grun)
+```
+
+The delta for each cell is visualized in Figure \@ref(fig:unref-pancreas-delta-dist).
+
+```{r unref-pancreas-delta-dist, fig.cap="Distributions of the deltas for each cell in the Grun dataset assigned to each label in the Muraro dataset. Each cell is represented by a point; low-quality assignments that were pruned out are colored in orange."}
+plotDeltaDistribution(pred.grun)
+```
+
+Finally, we visualize the heatmaps of the marker genes for each label in Figure \@ref(fig:unref-pancreas-marker-heat).
+
+```{r unref-pancreas-marker-heat, fig.width=20, fig.height=15, fig.cap="Heatmaps of log-expression values in the Grun dataset for all marker genes upregulated in each label in the Muraro reference dataset. Assigned labels for each cell are shown at the top of each plot."}
+library(scater)
+collected <- list()
+all.markers <- metadata(pred.grun)$de.genes
+
+for (lab in unique(pred.grun$labels)) {
+    collected[[lab]] <- plotHeatmap(sceG, silent=TRUE, 
+        order_columns_by="labels", main=lab,
+        features=unique(unlist(all.markers[[lab]])))[[4]] 
+}
+do.call(gridExtra::grid.arrange, collected)
+```
+
+## Comparison to clusters
+
+For comparison, we will perform a quick unsupervised analysis of the Grun dataset.
+We model the variances using the spike-in data and we perform graph-based clustering
+(increasing the resolution by dropping `k=5`).
+
+```{r}
+library(scran)
+decG <- modelGeneVarWithSpikes(sceG, "ERCC")
+
+set.seed(1000100)
+sceG <- denoisePCA(sceG, decG)
+sceG$cluster <- clusterSNNGraph(sceG, k=5, use.dimred="PCA")
+```
+
+We see that the clusters map well to the labels in Figure \@ref(fig:unref-pancreas-label-clusters).
+
+```{r unref-pancreas-label-clusters, fig.cap="Heatmap of the log-transformed number of cells in each combination of label (column) and cluster (row) in the Grun dataset."}
+tab <- table(cluster=sceG$cluster, label=pred.grun$labels) 
+pheatmap::pheatmap(log10(tab+10))
+```
+
+```{r, echo=FALSE}
+# Sanity check.
+rdx <- clusterRand(sceG$cluster, pred.grun$labels, mode="index")
+stopifnot(rdx > 0.8)
+```
+
+We proceed to the most important part of the analysis.
+Yes, that's right, the $t$-SNE plot (Figure \@ref(unref-pancreas-label-tsne)).
+
+```{r unref-pancreas-label-tsne, fig.cap="$t$-SNE plot of the Grun dataset, where each point is a cell and is colored by the assigned cluster. Reference labels are also placed on the median coordinate across all cells assigned with that label."}
+set.seed(101010100)
+sceG <- runTSNE(sceG, dimred="PCA")
+plotTSNE(sceG, colour_by="cluster", text_colour="red",
+    text_by=I(pred.grun$labels))
+```
 
 ## Session information {-}
 
