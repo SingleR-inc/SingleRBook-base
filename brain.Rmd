@@ -1,0 +1,153 @@
+---
+bibliography: ref.bib
+---
+
+# Cross-annotating mouse brains
+
+```{r, echo=FALSE, results="asis"}
+library(rebook)
+chapterPreamble(cache=TRUE)
+```
+
+## Loading the data
+
+We load the classic @zeisel2015brain dataset as our reference.
+Here, we'll rely on the fact that the authors have already performed quality control.
+
+```{r loading-zeisel}
+library(scRNAseq)
+sceZ <- ZeiselBrainData()
+```
+
+We compute log-expression values for use in marker detection inside `SingleR()`.
+
+```{r normalize-zeisel}
+library(scater)
+sceZ <- logNormCounts(sceZ)
+```
+
+We examine the distribution of labels in this reference.
+
+```{r}
+table(sceZ$level2class)
+```
+
+We load the @tasic2016adult dataset as our test.
+While not strictly necessary, we remove putative low-quality cells to simplify later interpretation.
+
+```{r loading-tasic}
+sceT <- TasicBrainData()
+sceT <- addPerCellQC(sceT, subsets=list(mito=grep("^mt_", rownames(sceT))))
+qc <- quickPerCellQC(colData(sceT), 
+    percent_subsets=c("subsets_mito_percent", "altexps_ERCC_percent"))
+sceT <- sceT[,which(!qc$discard)]
+```
+
+The Tasic dataset was generated using read-based technologies so we need to adjust for the transcript length.
+
+```{r normalize-tasic}
+library(AnnotationHub)
+mm.db <- AnnotationHub()[["AH73905"]]
+mm.exons <- exonsBy(mm.db, by="gene")
+mm.exons <- reduce(mm.exons)
+mm.len <- sum(width(mm.exons))
+mm.symb <- mapIds(mm.db, keys=names(mm.len), keytype="GENEID", column="SYMBOL")
+names(mm.len) <- mm.symb
+
+library(scater)
+keep <- intersect(names(mm.len), rownames(sceT))
+sceT <- sceT[keep,]
+assay(sceT, "TPM") <- calculateTPM(sceT, lengths=mm.len[keep])
+```
+
+## Applying the annotation
+
+We apply `SingleR()` with Wilcoxon rank sum test-based marker detection to annotate the Tasic dataset with the Zeisel labels.
+
+```{r annotation}
+library(SingleR)
+pred.tasic <- SingleR(test=sceT, ref=sceZ, labels=sceZ$level2class, 
+    assay.type.test="TPM", de.method="wilcox")
+```
+
+We examine the distribution of predicted labels:
+
+```{r}
+table(pred.tasic$labels)
+```
+
+We can also examine the number of discarded cells for each label:
+
+```{r}
+table(Label=pred.tasic$labels,
+    Lost=is.na(pred.tasic$pruned.labels))
+```
+
+## Diagnostics
+
+We visualize the assignment scores for each label in Figure \@ref(fig:unref-brain-score-heatmap).
+
+```{r unref-brain-score-heatmap, fig.width=10, fig.height=10, fig.cap="Heatmap of the (normalized) assignment scores for each cell (column) in the Tasic test dataset with respect to each label (row) in the Zeisel reference dataset. The final assignment for each cell is shown in the annotation bar at the top."}
+plotScoreHeatmap(pred.tasic)
+```
+
+The delta for each cell is visualized in Figure \@ref(fig:unref-brain-delta-dist).
+
+```{r unref-brain-delta-dist, fig.width=10, fig.height=10, fig.cap="Distributions of the deltas for each cell in the Tasic dataset assigned to each label in the Zeisel dataset. Each cell is represented by a point; low-quality assignments that were pruned out are colored in orange."}
+plotDeltaDistribution(pred.tasic)
+```
+
+Finally, we visualize the heatmaps of the marker genes for the most frequent label in Figure \@ref(fig:unref-brain-marker-heat).
+We could show these for all labels but I wouldn't want to bore you with a parade of large heatmaps. 
+
+```{r unref-brain-marker-heat, fig.width=10, fig.height=15, fig.cap="Heatmap of log-expression values in the Tasic dataset for all marker genes upregulated in the most frequent label from the Zeisel reference dataset."}
+library(scater)
+collected <- list()
+all.markers <- metadata(pred.tasic)$de.genes
+
+sceT <- logNormCounts(sceT)
+top.label <- names(sort(table(pred.tasic$labels), decreasing=TRUE))[1]
+
+per.label <- sumCountsAcrossCells(logcounts(sceT), 
+    ids=pred.tasic$labels, average=TRUE)
+per.label <- assay(per.label)[unique(unlist(all.markers[[top.label]])),]
+pheatmap::pheatmap(per.label, main=top.label)
+```
+
+## Comparison to clusters
+
+For comparison, we will perform a quick unsupervised analysis of the Grun dataset.
+We model the variances using the spike-in data and we perform graph-based clustering.
+
+```{r}
+library(scran)
+decT <- modelGeneVarWithSpikes(sceT, "ERCC")
+
+set.seed(1000100)
+sceT <- denoisePCA(sceT, decT, subset.row=getTopHVGs(decT, n=2500))
+sceT$cluster <- clusterSNNGraph(sceT, use.dimred="PCA")
+```
+
+We do not observe a clean 1:1 mapping between clusters and labels in Figure \@ref(fig:unref-brain-label-clusters),
+probably because many of the labels represent closely related cell types that are difficult to distinguish.
+
+```{r unref-brain-label-clusters, fig.cap="Heatmap of the log-transformed number of cells in each combination of label (column) and cluster (row) in the Tasic dataset."}
+tab <- table(cluster=sceT$cluster, label=pred.tasic$labels) 
+pheatmap::pheatmap(log10(tab+10))
+```
+
+We proceed to the most important part of the analysis.
+Yes, that's right, the $t$-SNE plot (Figure \@ref(fig:unref-brain-label-tsne)).
+
+```{r unref-brain-label-tsne, fig.cap="$t$-SNE plot of the Tasic dataset, where each point is a cell and is colored by the assigned cluster. Reference labels from the Zeisel dataset are also placed on the median coordinate across all cells assigned with that label."}
+set.seed(101010100)
+sceT <- runTSNE(sceT, dimred="PCA")
+plotTSNE(sceT, colour_by="cluster", text_colour="red",
+    text_by=I(pred.tasic$labels))
+```
+
+## Session information {-}
+
+```{r, echo=FALSE, results='asis'}
+prettySessionInfo()
+```
