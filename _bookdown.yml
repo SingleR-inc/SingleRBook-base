@@ -16,5 +16,6 @@ rmd_files: ["index.Rmd",
     "ontology.Rmd",
     "advanced.Rmd",
     "pancreas.Rmd",
+    "brain.Rmd",
     "authors.Rmd",
     "bibliography.Rmd"]
