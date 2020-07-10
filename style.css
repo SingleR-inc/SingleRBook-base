@@ -1,14 +1,38 @@
-p.caption {
-  color: #777;
-  margin-top: 10px;
+/*
+#0092ac   blue
+#c4d931   green (on blue)
+#87b13f   green (on white)
+*/
+
+.book .book-summary {
+  background-color: #0092ac;
 }
-p code {
-  white-space: inherit;
+
+.book .book-summary ul.summary li a,
+.book .book-summary ul.summary li span {
+  color: white;
+  font-weight: bold;
 }
-pre {
-  word-break: normal;
-  word-wrap: normal;
+
+.book .book-summary ul.summary li a:hover,
+.book .book-summary ul.summary li.active>a {
+  color: #c4d931;
 }
-pre code {
-  white-space: inherit;
+
+/*.book .book-summary ul.summary li.part>span*/
+.book .book-summary ul.summary li span {
+  color: black;
+  opacity: .5;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal h1 {
+  color: #87b13f;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal h2 {
+  color: #87b13f;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal h3 {
+  color: #1a81c2;
 }

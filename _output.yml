@@ -1,6 +1,5 @@
 bookdown::gitbook:
   css: style.css
-  highlight: tango
   config:
     fontsettings:
       theme: white
@@ -11,9 +10,13 @@ bookdown::gitbook:
         <li><a href="https://bioconductor.org" target="blank">Published by Bioconductor</a></li>
     download: null
     bookdown::epub_book: default
+    edit: https://github.com/LTLA/SingleRBook-base/edit/master/%s
+    view: https://github.com/LTLA/SingleRBook-base/blob/master/%s
+    history: https://github.com/LTLA/SingleRBook-base/commits/master/%s
     sharing:
       github: no
       facebook: no
       twitter: no
       linkedin: no
-    cover: images/cover.png
+    cover-image: "https://www.bioconductor.org/images/logo_bioconductor.gif"
+    favicon: "https://bioc2019.bioconductor.org/images/favicon.ico"
