@@ -1,8 +1,27 @@
 /*
+Developed and maintained by Kevin Rue-Albrecht (@kevinrue)
+*/
+
+/*
 #0092ac   blue
 #c4d931   green (on blue)
 #87b13f   green (on white)
 */
+
+p.caption {
+  color: #777;
+  margin-top: 10px;
+}
+p code {
+  white-space: inherit;
+}
+pre {
+  word-break: normal;
+  word-wrap: normal;
+}
+pre code {
+  white-space: inherit;
+}
 
 .book .book-summary {
   background-color: #0092ac;
