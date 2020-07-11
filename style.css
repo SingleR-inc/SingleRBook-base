@@ -24,7 +24,7 @@ pre code {
 }
 
 .book .book-summary {
-  background-color: #0092ac;
+  background-color: #d10067;
 }
 
 .book .book-summary ul.summary li a,
@@ -35,7 +35,7 @@ pre code {
 
 .book .book-summary ul.summary li a:hover,
 .book .book-summary ul.summary li.active>a {
-  color: #c4d931;
+  color: #ffab88;
 }
 
 /*.book .book-summary ul.summary li.part>span*/
@@ -45,13 +45,13 @@ pre code {
 }
 
 .book .book-body .page-wrapper .page-inner section.normal h1 {
-  color: #87b13f;
+  color: #ff008d;
 }
 
 .book .book-body .page-wrapper .page-inner section.normal h2 {
-  color: #87b13f;
+  color: #ff008d;
 }
 
 .book .book-body .page-wrapper .page-inner section.normal h3 {
-  color: #1a81c2;
+  color: #e0836c;
 }

@@ -6,7 +6,6 @@ documentclass: book
 bibliography: ref.bib
 biblio-style: apalike
 link-citations: yes
-description: "The SingleR book. Because sometimes, a vignette just isn't enough."
 ---
 
 ```{r, echo=FALSE}
@@ -16,7 +15,7 @@ library(BiocStyle)
 
 # Preface {-}
 
-<a href="https://bioconductor.org"><img src="https://github.com/Bioconductor/BiocStickers/raw/master/Bioconductor/Bioconductor-serial.gif" width="200" alt="Bioconductor Sticker" align="right" style="margin: 0 1em 0 1em" /></a> 
+<a href="https://bioconductor.org/packages/SingleR"><img src="https://raw.githubusercontent.com/Bioconductor/BiocStickers/master/SingleR/SingleR_sticker_invert.png" width="200" alt="SingleR Sticker" align="right" style="margin: 0 1em 0 1em" /></a> 
 
 Imagine a world without a reference genome.
 Whenever you receive new sequencing data - and we'll just talk about transcriptomic data for now -
