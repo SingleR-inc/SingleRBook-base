@@ -6,6 +6,9 @@ documentclass: book
 bibliography: ref.bib
 biblio-style: apalike
 link-citations: yes
+description: "The SingleR book. Because sometimes, a vignette just isn't enough."
+cover-image: https://raw.githubusercontent.com/Bioconductor/BiocStickers/master/SingleR/SingleR_sticker_invert.png
+favicon: favicon.ico 
 ---
 
 ```{r, echo=FALSE}

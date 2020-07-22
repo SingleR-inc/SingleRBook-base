@@ -18,6 +18,3 @@ bookdown::gitbook:
       facebook: no
       twitter: no
       linkedin: no
-    description: "The SingleR book. Because sometimes, a vignette just isn't enough."
-    cover-image: https://raw.githubusercontent.com/Bioconductor/BiocStickers/master/SingleR/SingleR_sticker_invert.png
-    favicon: https://bioc2019.bioconductor.org/images/favicon.ico 
