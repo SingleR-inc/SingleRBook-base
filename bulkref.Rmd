@@ -179,7 +179,7 @@ it is not entirely unexpected that some references are "better" than others depe
 We would also prefer a reference that is generated from a similar technology or protocol as our test dataset,
 though this is usually not an issue when using `SingleR()` to annotate well-defined cell types.
 
-Users are advised to read the `r Biocpkg("celldex", vignette="userguide", "relevant vignette")` 
+Users are advised to read the `r Biocpkg("celldex", vignette="userguide.html", "relevant vignette")` 
 for more details about the available references as well as some recommendations on which to use.
 (As an aside, the ImmGen dataset and other references were originally supplied along with `r Biocpkg("SingleR")` itself
 but have since been migrated to the separate `r Biocpkg("celldex")` package for more general use throughout Bioconductor.)
