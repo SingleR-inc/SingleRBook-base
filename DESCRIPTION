@@ -1,0 +1,28 @@
+Package: SingleRBook
+Title: The Book of SingleR
+Version: 1.0.0
+Date: 2020-08-10
+Authors@R: person('Aaron', 'Lun', role = c('aut', 'cre'), email="infinite.monkeys.with.keyboards@gmail.com")
+Description: 
+    Comprehensive guide to using the SingleR package (https://bioconductor.org/packages/SingleR) 
+    for automated cell annotation in single-cell RNA-seq datasets. 
+License: GPL-3
+Encoding: UTF-8
+Imports: AnnotationHub,
+    BiocFileCache,
+    BiocNeighbors,
+    BiocParallel,
+    BiocStyle,
+    celldex,
+    gridExtra,
+    igraph,
+    knitr,
+    ontoProc,
+    pheatmap,
+    rebook,
+    scater,
+    scran,
+    scRNAseq,
+    SingleR,
+    TENxPBMCData,
+    viridis
