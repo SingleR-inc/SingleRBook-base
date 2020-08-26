@@ -144,6 +144,46 @@ table(pred3a$labels, pred3b$labels)
 stopifnot(mean(pred3a$labels==pred3b$labels) > 0.95)
 ```
 
+## Cluster-level annotation
+
+The default philosophy of `r Biocpkg("SingleR")` is to perform annotation of each individual cell in the test dataset.
+An alternative strategy is to perform annotation of aggregated profiles for groups or clusters of cells.
+To demonstrate, we will perform a quick-and-dirty clustering of our PBMC dataset with a variety of Bioconductor packages.
+
+```{r}
+library(scuttle)
+sce <- logNormCounts(sce)
+
+library(scran)
+dec <- modelGeneVarByPoisson(sce)
+sce <- denoisePCA(sce, dec, subset.row=getTopHVGs(dec, n=5000))
+
+library(bluster)
+colLabels(sce) <- clusterRows(reducedDim(sce), NNGraphParam())
+
+library(scater)
+set.seed(117)
+sce <- runTSNE(sce, dimred="PCA")
+plotTSNE(sce, colour_by="label")
+```
+
+By passing `clusters=` to `SingleR()`, we direct the function to compute an aggregated profile per cluster.
+Annotation is then performed on the cluster-level profiles rather than on the single-cell level.
+This has the major advantage of being much faster to compute as there are obviously fewer clusters than cells;
+it is also easier to interpret as it directly returns the likely cell type identity of each cluster.
+
+```{r}
+SingleR(sce, dice, clusters=colLabels(sce), labels=dice$label.main)
+```
+
+This approach assumes that each cluster in the test dataset corresponds to exactly one reference label.
+If a cluster actually contains a mixture of multiple labels, this will not be reflected in its lone assigned label.
+(We note that it would be very difficult to determine the composition of the mixture from the `SingleR()` scores.)
+Indeed, there is no guarantee that the clustering is driven by the same factors that distinguish the reference labels,
+decreasing the reliability of the annotations when novel heterogeneity is present in the test dataset.
+The default per-cell strategy is safer and provides more information about the ambiguity of the annotations, 
+which is important for closely related labels where a close correspondence between clusters and labels cannot be expected. 
+
 ## Session information {-}
 
 ```{r, echo=FALSE, results='asis'}
