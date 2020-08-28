@@ -4,7 +4,7 @@ bibliography: ref.bib
 
 # (PART) Case studies {-}
 
-# Cross-annotating human pancreas
+# Cross-annotating human pancreas {#pancreas-case-study}
 
 ```{r, echo=FALSE, results="asis"}
 library(rebook)
@@ -113,13 +113,15 @@ For comparison, we will perform a quick unsupervised analysis of the Grun datase
 We model the variances using the spike-in data and we perform graph-based clustering
 (increasing the resolution by dropping `k=5`).
 
-```{r}
+```{r clustering}
 library(scran)
 decG <- modelGeneVarWithSpikes(sceG, "ERCC")
 
 set.seed(1000100)
 sceG <- denoisePCA(sceG, decG)
-sceG$cluster <- clusterSNNGraph(sceG, k=5, use.dimred="PCA")
+
+library(bluster)
+sceG$cluster <- clusterRows(reducedDim(sceG), NNGraphParam(k=5))
 ```
 
 We see that the clusters map well to the labels in Figure \@ref(fig:unref-pancreas-label-clusters).
@@ -131,7 +133,7 @@ pheatmap::pheatmap(log10(tab+10))
 
 ```{r, echo=FALSE}
 # Sanity check.
-rdx <- clusterRand(sceG$cluster, pred.grun$labels, mode="index")
+rdx <- pairwiseRand(sceG$cluster, pred.grun$labels, mode="index")
 stopifnot(rdx > 0.8)
 ```
 
