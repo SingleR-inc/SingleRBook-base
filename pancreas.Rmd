@@ -124,7 +124,7 @@ library(bluster)
 sceG$cluster <- clusterRows(reducedDim(sceG), NNGraphParam(k=5))
 ```
 
-We see that the clusters map well to the labels in Figure \@ref(fig:unref-pancreas-label-clusters).
+We see that the clusters map reasonably well to the labels in Figure \@ref(fig:unref-pancreas-label-clusters).
 
 ```{r unref-pancreas-label-clusters, fig.cap="Heatmap of the log-transformed number of cells in each combination of label (column) and cluster (row) in the Grun dataset."}
 tab <- table(cluster=sceG$cluster, label=pred.grun$labels) 
@@ -134,7 +134,7 @@ pheatmap::pheatmap(log10(tab+10))
 ```{r, echo=FALSE}
 # Sanity check.
 rdx <- pairwiseRand(sceG$cluster, pred.grun$labels, mode="index")
-stopifnot(rdx > 0.8)
+stopifnot(rdx > 0.3)
 ```
 
 We proceed to the most important part of the analysis.
