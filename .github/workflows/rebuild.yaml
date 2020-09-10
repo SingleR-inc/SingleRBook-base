@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v2
-      - name: Update DESCRIPTION and Makefile
+      - name: Update DESCRIPTION
         run: |
           rebook::updateDependencies(".")
         shell: Rscript {0}
@@ -19,6 +19,6 @@ jobs:
         run: | 
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add DESCRIPTION Makefile
-          git commit -m "Rebuilding sundries." || true
+          git add DESCRIPTION
+          git commit -m "Rebuilding DESCRIPTION." || true
           git push
