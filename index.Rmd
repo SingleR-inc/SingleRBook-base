@@ -21,20 +21,14 @@ library(BiocStyle)
 <a href="https://bioconductor.org/packages/SingleR"><img src="https://raw.githubusercontent.com/Bioconductor/BiocStickers/master/SingleR/SingleR_sticker_invert.png" width="200" alt="SingleR Sticker" align="right" style="margin: 0 1em 0 1em" /></a> 
 
 Imagine a world without a reference genome.
-Whenever you receive new sequencing data - and we'll just talk about transcriptomic data for now -
-you'll have to run it through an assembler to characterize the genes that are being expressed.
-If you're lucky enough to get a decent assembly that isn't confused by contamination or homologous sequences,
-it falls on you to pick through the sequence motifs to figure out what what the gene actually is. 
-And if you're at a conference and you hear the name of a gene you're working on,
-how can you be sure that everyone's talking about the same thing?
+Whenever we receive new RNA-seq data, we'd need to run it through an assembler to identify the expressed sequences.
+We would then need to inspect each sequence to determine its likely function, e.g., based on sequence motifs.
+This process is analogous to current practice in single-cell data analysis; simply replace reads with cells, assemblies with clusters, and genes with cell types.
+A typical practitioner will hope that their clusters are reasonable proxies for the biological states of interest and that their manual annotation of the clusters is accurate. 
+Such an "artisanal" process is difficult to reproduce and scale to larger datasets involving more diverse cell types.
 
-Now, this particular scenario only exists in history books but it is easy to see the parallels with single-cell data analyses;
-simply replace reads with cells, assemblies with clusters, and genes with cell types.
-In the single-cell analysis field, a typical practitioner will hope that their clusters are reasonable proxies for the biological states of interest (a strong assumption indeed!) and that their manual annotation of the clusters is accurate (which is itself dependent on domain expertise and coffee consumption).
-The current process of clustering, looking at a handful of markers and making a guesstimate of the cell type is best described as "artisanal" - which is not inherently bad, but one would expect that a mature technology would not require so much manual intervention for its routine use.
-
-If hard work is a disease, then automation is the cure, and this case is no exception.
-Automated cell type annotation methods match cells in a new dataset against curated reference profiles of known cell types, assigning each cell to the type that its expression profile is most similar to. 
+The solution is to perform automated cell type annotation, a.k.a. cell type classification (or occasionally, "label transfer").
+These methods compare cells in a new dataset against curated reference profiles of known cell types, assigning each new cell to the reference type that its expression profile is most similar to. 
 This allows users to skip the mundane annotation of their data and jump directly to the interesting questions - does my cell type change in abundance or expression across treatments? Is there interesting substructure within an existing population?
 In this respect, automated annotation methods are the single-cell field's equivalent to genome aligners,
 and we anticipate that the former will also become standard procedure for single-cell data analysis.
