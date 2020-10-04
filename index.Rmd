@@ -1,13 +1,13 @@
 --- 
 title: "Assigning cell types with SingleR"
 date: "`r Sys.Date()`"
-site: bookdown::bookdown_site
 documentclass: book
 bibliography: ref.bib
 biblio-style: apalike
 link-citations: yes
 description: "The SingleR book. Because sometimes, a vignette just isn't enough."
 cover-image: https://raw.githubusercontent.com/Bioconductor/BiocStickers/master/SingleR/SingleR_sticker_invert.png
+github-repo: LTLA/SingleRBook-base
 favicon: favicon.ico 
 ---
 
@@ -18,7 +18,7 @@ library(BiocStyle)
 
 # Preface {-}
 
-<a href="https://bioconductor.org/packages/SingleR"><img src="https://raw.githubusercontent.com/Bioconductor/BiocStickers/master/SingleR/SingleR_sticker_invert.png" width="200" alt="SingleR Sticker" align="right" style="margin: 0 1em 0 1em" /></a> 
+<a href="https://bioconductor.org/packages/SingleR"><img src=`r rmarkdown::metadata[["cover-image"]]` width="200" alt="SingleR Sticker" align="right" style="margin: 0 1em 0 1em" /></a> 
 
 Imagine a world without a reference genome.
 Whenever we receive new RNA-seq data, we'd need to run it through an assembler to identify the expressed sequences.
