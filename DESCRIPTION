@@ -4,10 +4,13 @@ Version: 1.0.0
 Date: 2020-08-10
 Authors@R: person('Aaron', 'Lun', role = c('aut', 'cre'), email="infinite.monkeys.with.keyboards@gmail.com")
 Description: 
-    Comprehensive guide to using the SingleR package (https://bioconductor.org/packages/SingleR) 
-    for automated cell annotation in single-cell RNA-seq datasets. 
-License: GPL-3
+    Comprehensive guide to using the SingleR Bioconductor package
+    (https://bioconductor.org/packages/SingleR) for automated cell annotation
+    in single-cell RNA-seq datasets. Includes theoretical explanations, worked
+    examples with code, and demonstrations of advanced functionality.
+License: CC BY
 Encoding: UTF-8
+URL: https://github.com/LTLA/SingleRBook
 Imports: AnnotationHub,
     BiocFileCache,
     BiocNeighbors,
