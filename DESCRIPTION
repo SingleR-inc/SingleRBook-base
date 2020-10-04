@@ -1,7 +1,7 @@
 Package: SingleRBook
 Title: The Book of SingleR
 Version: 1.0.0
-Date: 2020-08-10
+Date: 2020-10-04
 Authors@R: person('Aaron', 'Lun', role = c('aut', 'cre'), email="infinite.monkeys.with.keyboards@gmail.com")
 Description: 
     Comprehensive guide to using the SingleR Bioconductor package
@@ -11,7 +11,7 @@ Description:
 License: CC BY
 Encoding: UTF-8
 URL: https://github.com/LTLA/SingleRBook
-Imports: AnnotationHub,
+Suggests: AnnotationHub,
     BiocFileCache,
     BiocNeighbors,
     BiocParallel,
