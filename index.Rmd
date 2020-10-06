@@ -1,6 +1,5 @@
 --- 
 title: "Assigning cell types with SingleR"
-date: "`r Sys.Date()`"
 documentclass: book
 bibliography: ref.bib
 biblio-style: apalike
@@ -15,6 +14,15 @@ favicon: favicon.ico
 knitr::opts_chunk$set(error=FALSE, warning=FALSE, message=FALSE)
 library(BiocStyle)
 ```
+
+```{r, echo=FALSE}
+.gh_url <- file.path('https://github.com', rmarkdown::metadata[['github-repo']])
+```
+
+---
+date: "`r rebook::openingDetails(Copyright='Aaron Lun, 2020', Source=.gh_url)`"
+url: "`r .gh_url`"
+---
 
 # Preface {-}
 

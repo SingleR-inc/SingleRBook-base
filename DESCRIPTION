@@ -1,7 +1,7 @@
 Package: SingleRBook
 Title: The Book of SingleR
 Version: 1.0.0
-Date: 2020-10-04
+Date: 2020-10-05
 Authors@R: person('Aaron', 'Lun', role = c('aut', 'cre'), email="infinite.monkeys.with.keyboards@gmail.com")
 Description: 
     Comprehensive guide to using the SingleR Bioconductor package
