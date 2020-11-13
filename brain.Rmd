@@ -125,7 +125,9 @@ decT <- modelGeneVarWithSpikes(sceT, "ERCC")
 
 set.seed(1000100)
 sceT <- denoisePCA(sceT, decT, subset.row=getTopHVGs(decT, n=2500))
-sceT$cluster <- clusterSNNGraph(sceT, use.dimred="PCA")
+
+library(bluster)
+sceT$cluster <- clusterRows(reducedDim(sceT, "PCA"), NNGraphParam())
 ```
 
 We do not observe a clean 1:1 mapping between clusters and labels in Figure \@ref(fig:unref-brain-label-clusters),
