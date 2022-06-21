@@ -69,8 +69,7 @@ We perform annotation by calling `SingleR()` on our test (Grun) dataset and the 
 leaving the default of `de.method="classic"` to use the original marker detection scheme.
 This applies the algorithm described in Section \@ref(method-description),
 returning a `DataFrame` where each row contains prediction results for a single cell in the `sce` object.
-Labels are provided before fine-tuning (`first.labels`), after fine-tuning (`labels`) and after pruning (`pruned.labels`);
-some of the other fields are discussed in more detail in Chapter \@ref(annotation-diagnostics).
+Labels are provided in the `labels` column; some of the other fields are discussed in more detail in Chapter \@ref(annotation-diagnostics).
 
 ```{r}
 library(SingleR)

@@ -216,7 +216,7 @@ pairwiseRand(sceG$cluster, pred.grun$labels, mode="index")
 ```
 
 In practice, it is more informative to examine the distribution of cells across each cluster/label combination.
-Figure \@ref(grun-label-clusters) shows that most clusters are nested within labels, 
+Figure \@ref(fig:grun-label-clusters) shows that most clusters are nested within labels, 
 a difference in resolution that is likely responsible for reducing the ARI.
 Clusters containing multiple labels are particularly interesting for diagnostic purposes,
 as this suggests that the differences between labels are not strong enough to drive formation of distinct clusters in the test.

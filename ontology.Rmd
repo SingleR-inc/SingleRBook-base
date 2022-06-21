@@ -24,9 +24,7 @@ that we can query for various pieces of information.
 ```{r}
 # TODO: wrap in utility function.
 library(ontoProc)
-bfc <- BiocFileCache::BiocFileCache(ask=FALSE)
-path <- BiocFileCache::bfcrpath(bfc, "http://purl.obolibrary.org/obo/cl.obo")
-cl <- get_ontology(path, extract_tags="everything")
+cl <- getCellOnto()
 cl
 ```
 
